@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SearchForm, SearchParams } from './components/SearchForm';
+import { QuestionFlow } from './components/QuestionFlow';
 import { EventResults } from './components/EventResults';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Loading } from './components/Loading';
@@ -7,29 +7,38 @@ import { eventApi } from './services/api';
 import { Event } from './types';
 import './App.css';
 
+export interface SearchParams {
+  location: string;
+  dateRange: string;
+  eventType: string;
+  keywords?: string;
+}
+
 /**
  * Main App Component
  *
  * Manages the application state and flow between:
- * 1. Search form (user inputs)
+ * 1. Question flow (configurable multi-step form)
  * 2. Loading state (fetching events)
  * 3. Results display (showing filtered events)
  */
 function App() {
-  const [stage, setStage] = useState<'search' | 'loading' | 'results'>('search');
+  const [stage, setStage] = useState<'search' | 'loading' | 'results' | 'no-results'>('search');
   const [events, setEvents] = useState<Event[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null);
 
-  const handleSearch = async (params: SearchParams) => {
+  const handleSearch = async (params: SearchParams | Record<string, unknown>) => {
     setStage('loading');
     setError(null);
 
     try {
-      const response = await eventApi.searchEvents(params);
+      const searchParams = params as SearchParams;
+      setLastSearchParams(searchParams);
+      const response = await eventApi.searchEvents(searchParams);
 
       if (response.events.length === 0) {
-        setError('No events found matching your criteria. Please try different search parameters.');
-        setStage('search');
+        setStage('no-results');
         return;
       }
 
@@ -67,9 +76,54 @@ function App() {
             </div>
           )}
 
-          {stage === 'search' && <SearchForm onSearch={handleSearch} />}
+          {stage === 'search' && <QuestionFlow onComplete={handleSearch} />}
 
           {stage === 'loading' && <Loading message="Searching for events..." />}
+
+          {stage === 'no-results' && (
+            <div className="no-results-container">
+              <div className="no-results-icon">🔍</div>
+              <h2 className="no-results-title">No Events Found</h2>
+              <p className="no-results-message">We couldn't find any events matching your search criteria.</p>
+              {lastSearchParams && (
+                <div className="search-criteria">
+                  <p className="criteria-label">You searched for:</p>
+                  <ul className="criteria-list">
+                    <li>
+                      📍 <strong>Location:</strong> {lastSearchParams.location}
+                    </li>
+                    {lastSearchParams.dateRange && (
+                      <li>
+                        📅 <strong>When:</strong> {lastSearchParams.dateRange.replace(/-/g, ' ')}
+                      </li>
+                    )}
+                    {lastSearchParams.eventType && (
+                      <li>
+                        🎭 <strong>Type:</strong> {lastSearchParams.eventType}
+                      </li>
+                    )}
+                    {lastSearchParams.keywords && (
+                      <li>
+                        🔎 <strong>Keywords:</strong> {lastSearchParams.keywords}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+              <div className="no-results-suggestions">
+                <p className="suggestions-title">Try these suggestions:</p>
+                <ul className="suggestions-list">
+                  <li>✓ Broaden your date range</li>
+                  <li>✓ Try a nearby city</li>
+                  <li>✓ Remove specific keywords</li>
+                  <li>✓ Select "All Types" for event category</li>
+                </ul>
+              </div>
+              <button className="btn-search-again" onClick={handleStartOver}>
+                ← Try New Search
+              </button>
+            </div>
+          )}
 
           {stage === 'results' && <EventResults events={events} onStartOver={handleStartOver} />}
         </main>

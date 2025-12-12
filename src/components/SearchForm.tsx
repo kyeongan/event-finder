@@ -108,7 +108,7 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
                 onFocus={() => location.length >= 2 && filteredCities.length > 0 && setShowSuggestions(true)}
                 placeholder="e.g., New York, NY"
                 className="form-input"
-                autoComplete="on"
+                autoComplete="off"
               />
               {showSuggestions && (
                 <div ref={suggestionsRef} className="suggestions-dropdown">
