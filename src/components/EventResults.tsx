@@ -27,12 +27,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
   const [sortBy, setSortBy] = useState<'date' | 'relevance' | 'name'>('relevance');
   const [showTooltipFor, setShowTooltipFor] = useState<string | null>(null);
 
-  // Extract unique cities and genres for filter options
-  const uniqueCities = useMemo(() => {
-    const cities = events.map((e) => e.city).filter((city): city is string => !!city);
-    return Array.from(new Set(cities)).sort();
-  }, [events]);
-
   const uniqueGenres = useMemo(() => {
     const genres = events.map((e) => e.genre).filter((genre): genre is string => !!genre);
     return Array.from(new Set(genres)).sort();
@@ -97,24 +91,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
     }
     const { min, max, currency } = event.priceRanges[0];
     return `${currency} $${min} - $${max}`;
-  };
-
-  const getRelevanceTooltip = (event: Event): string => {
-    const factors = event.relevanceFactors;
-    const reasons: string[] = [];
-
-    if (factors.hasKeywordMatch) {
-      reasons.push('✓ Matches your search keywords');
-    }
-    if (factors.matchesClassification) {
-      reasons.push('✓ Matches your preferred event type');
-    }
-    if (factors.matchesCity) {
-      reasons.push('✓ In your selected city');
-    }
-    reasons.push(`Position in API results: #${factors.position}`);
-
-    return reasons.join('\n');
   };
 
   return (

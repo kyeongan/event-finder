@@ -8,7 +8,7 @@
  * - These functions are pure and easy to test, high value-to-effort ratio
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers, saveLastSearch, loadLastSearch, addToSearchHistory, getSearchHistory, clearSearchHistory } from '../utils/storage';
 
 describe('Storage Utilities', () => {
