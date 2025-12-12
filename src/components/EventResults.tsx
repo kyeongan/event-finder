@@ -25,6 +25,7 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
     priceRange: 'all',
   });
   const [sortBy, setSortBy] = useState<'date' | 'relevance' | 'name'>('relevance');
+  const [showTooltipFor, setShowTooltipFor] = useState<string | null>(null);
 
   // Extract unique cities and genres for filter options
   const uniqueCities = useMemo(() => {
@@ -203,9 +204,40 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
                   <td>{event.genre || event.classification || '-'}</td>
                   <td>{formatPrice(event)}</td>
                   <td>
-                    <div className="relevance-badge" title={getRelevanceTooltip(event)}>
-                      #{event.relevanceFactors.position}
-                      <span className="tooltip-icon">ℹ️</span>
+                    <div className="relevance-cell" onMouseEnter={() => setShowTooltipFor(event.id)} onMouseLeave={() => setShowTooltipFor(null)}>
+                      <div className="relevance-badge">
+                        #{event.relevanceFactors.position}
+                        <span className="tooltip-icon">ℹ️</span>
+                      </div>
+                      {showTooltipFor === event.id && (
+                        <div className="relevance-tooltip">
+                          <div className="tooltip-header">Relevance Score</div>
+                          <div className="tooltip-content">
+                            <div className="tooltip-item">
+                              <span className="tooltip-label">API Position:</span>
+                              <span className="tooltip-value">#{event.relevanceFactors.position}</span>
+                            </div>
+                            {event.relevanceFactors.hasKeywordMatch !== null && (
+                              <div className={`tooltip-item ${event.relevanceFactors.hasKeywordMatch ? 'match' : 'no-match'}`}>
+                                <span className="match-icon">{event.relevanceFactors.hasKeywordMatch ? '✓' : '✗'}</span>
+                                <span>Keyword match</span>
+                              </div>
+                            )}
+                            {event.relevanceFactors.matchesClassification !== null && (
+                              <div className={`tooltip-item ${event.relevanceFactors.matchesClassification ? 'match' : 'no-match'}`}>
+                                <span className="match-icon">{event.relevanceFactors.matchesClassification ? '✓' : '✗'}</span>
+                                <span>Event type match</span>
+                              </div>
+                            )}
+                            {event.relevanceFactors.matchesCity !== null && (
+                              <div className={`tooltip-item ${event.relevanceFactors.matchesCity ? 'match' : 'no-match'}`}>
+                                <span className="match-icon">{event.relevanceFactors.matchesCity ? '✓' : '✗'}</span>
+                                <span>City match</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td>

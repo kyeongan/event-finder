@@ -124,6 +124,82 @@
   cursor: help;
 }
 
+.relevance-cell {
+  position: relative;
+}
+
+.relevance-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0.5rem;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 220px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.tooltip-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 6px 6px 0 0;
+}
+
+.tooltip-content {
+  padding: 0.75rem;
+}
+
+.tooltip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+  color: #2d3748;
+}
+
+.tooltip-item.match {
+  color: #38a169;
+  font-weight: 500;
+}
+
+.tooltip-item.no-match {
+  color: #718096;
+}
+
+.tooltip-label {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.tooltip-value {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.match-icon {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
 .tooltip-icon {
   font-size: 0.75rem;
 }
