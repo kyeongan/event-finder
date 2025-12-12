@@ -81,7 +81,9 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
         position: index + 1,
         hasKeywordMatch: keyword ? event.name.toLowerCase().includes(keyword.toLowerCase()) : null,
         matchesClassification: classificationName ? event.classifications?.[0]?.segment?.name?.toLowerCase() === classificationName.toLowerCase() : null,
-        matchesCity: city ? event._embedded?.venues?.[0]?.city?.name?.toLowerCase() === city.toLowerCase() : null,
+        matchesCity: city
+          ? event._embedded?.venues?.[0]?.city?.name?.toLowerCase().includes(city.toLowerCase()) || city.toLowerCase().includes(event._embedded?.venues?.[0]?.city?.name?.toLowerCase() || '')
+          : null,
       },
     }));
 
