@@ -77,7 +77,13 @@ export const eventApi = {
       }
 
       if (searchParams.location) {
-        params.city = searchParams.location;
+        // Extract city name from "City, State" format
+        const cityName = searchParams.location.split(',')[0].trim();
+        params.city = cityName;
+      }
+
+      if (searchParams.keywords) {
+        params.keyword = searchParams.keywords;
       }
 
       if (searchParams.dateRange) {
@@ -101,10 +107,10 @@ export const eventApi = {
       }
 
       if (error.request) {
-        throw new Error('Unable to connect to the server. Please check your connection.');
+        throw new Error('Could not reach the server. Please check your internet connection and try again.');
       }
 
-      throw new Error('An unexpected error occurred. Please try again.');
+      throw new Error('Something went wrong. Please try again later.');
     }
   },
 

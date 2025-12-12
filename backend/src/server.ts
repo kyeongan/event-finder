@@ -1,3 +1,22 @@
+/**
+ * Express Backend Server
+ *
+ * PROTOTYPE SHORTCUTS TAKEN:
+ * 1. No authentication - endpoints are open to anyone
+ * 2. No rate limiting - could be abused in production
+ * 3. No caching - every request hits Ticketmaster API
+ * 4. In-memory city list - would use database or geocoding API
+ * 5. Basic error handling - would add structured logging
+ *
+ * PRODUCTION IMPROVEMENTS:
+ * - Add Redis for API response caching
+ * - Implement rate limiting (express-rate-limit)
+ * - Add request logging (Morgan or Winston)
+ * - Use proper secrets management (AWS Secrets Manager)
+ * - Add API versioning (/api/v1/...)
+ * - Implement request validation middleware
+ */
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -9,7 +28,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors()); // SHORTCUT: Allow all origins. Production: configure specific origins
 app.use(express.json());
 
 // Ticketmaster API configuration
