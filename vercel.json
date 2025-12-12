@@ -13,8 +13,5 @@
     "api/**/*.ts": {
       "runtime": "@vercel/node@3"
     }
-  },
-  "env": {
-    "TICKETMASTER_API_KEY": "@ticketmaster_api_key"
   }
 }
