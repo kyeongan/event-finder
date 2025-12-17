@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getVisibleQuestions, validateAnswers, answersToSearchParams } from '../config/questions';
 import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers } from '../utils/storage';
 import './QuestionFlow.css';
+import axios from 'axios';
 
 interface QuestionFlowProps {
   onComplete: (answers: Record<string, any>) => void;
@@ -62,8 +63,9 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
     const fetchCities = async () => {
       setIsLoadingSuggestions(true);
       try {
-        const response = await fetch(`http://localhost:3001/api/cities/search?query=${encodeURIComponent(value)}&limit=10`);
-        const data = await response.json();
+        // const response = await fetch(`http://localhost:3001/api/cities/search?query=${encodeURIComponent(value)}&limit=10`);
+        // const data = await response.json();
+        const { data } = await axios.get(`http://localhost:3001/api/cities/search?query=${encodeURIComponent(value)}&limit=10`);
         setCitySuggestions(data.cities || []);
         setShowSuggestions(data.cities?.length > 0);
       } catch (error) {
@@ -167,7 +169,7 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
     setCitySuggestions([]);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleNext();
@@ -224,7 +226,7 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
               type="text"
               value={currentValue}
               onChange={(e) => handleAnswer(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               onFocus={() => currentValue.length >= 2 && citySuggestions.length > 0 && setShowSuggestions(true)}
               placeholder={currentQuestion.placeholder}
               className={`question-input ${errors[currentQuestion.id] ? 'error' : ''}`}
@@ -249,7 +251,7 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
             type="text"
             value={currentValue}
             onChange={(e) => handleAnswer(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder={currentQuestion.placeholder}
             className={`question-input ${errors[currentQuestion.id] ? 'error' : ''}`}
             autoFocus
@@ -308,7 +310,9 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
         </div>
 
         <div className="question-input-container">
+          <p>start</p>
           {renderInput()}
+          <p>end</p>
           {errors[currentQuestion.id] && <div className="error-message">{errors[currentQuestion.id]}</div>}
         </div>
 
