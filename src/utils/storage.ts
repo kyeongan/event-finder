@@ -5,32 +5,61 @@
  * Users can resume where they left off even after closing the browser.
  */
 
-const STORAGE_KEYS = {
-  ANSWERS: 'eventFinder_answers',
-  LAST_SEARCH: 'eventFinder_lastSearch',
-  SEARCH_HISTORY: 'eventFinder_searchHistory',
-} as const;
+const STORAGE_KEY = 'eventFinder_answers';
+
+export interface StorageError {
+  success: false;
+  error: string;
+}
+
+export interface StorageSuccess<T> {
+  success: true;
+  data: T;
+}
+
+export type StorageResult<T> = StorageSuccess<T> | StorageError;
 
 /**
  * Save answers to localStorage
+ * @returns Success status
  */
-export function saveAnswers(answers: Record<string, any>): void {
+export function saveAnswers(answers: Record<string, any>): StorageResult<void> {
   try {
-    localStorage.setItem(STORAGE_KEYS.ANSWERS, JSON.stringify(answers));
+    if (!answers || typeof answers !== 'object') {
+      return { success: false, error: 'Invalid answers object' };
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+    return { success: true, data: undefined };
   } catch (error) {
-    console.error('Failed to save answers to localStorage:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to save answers to localStorage:', message);
+    return { success: false, error: message };
   }
 }
 
 /**
  * Load answers from localStorage
+ * @returns Parsed answers or null if not found/invalid
  */
 export function loadAnswers(): Record<string, any> | null {
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.ANSWERS);
-    return stored ? JSON.parse(stored) : null;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored);
+
+    // Validate parsed data is an object
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      console.warn('Invalid answers format in localStorage, clearing...');
+      clearAnswers();
+      return null;
+    }
+
+    return parsed;
   } catch (error) {
     console.error('Failed to load answers from localStorage:', error);
+    // Clear corrupted data
+    clearAnswers();
     return null;
   }
 }
@@ -40,80 +69,9 @@ export function loadAnswers(): Record<string, any> | null {
  */
 export function clearAnswers(): void {
   try {
-    localStorage.removeItem(STORAGE_KEYS.ANSWERS);
+    localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     console.error('Failed to clear answers from localStorage:', error);
-  }
-}
-
-/**
- * Save last search parameters
- */
-export function saveLastSearch(searchParams: Record<string, any>): void {
-  try {
-    const searchData = {
-      params: searchParams,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEYS.LAST_SEARCH, JSON.stringify(searchData));
-  } catch (error) {
-    console.error('Failed to save last search to localStorage:', error);
-  }
-}
-
-/**
- * Load last search parameters
- */
-export function loadLastSearch(): { params: Record<string, any>; timestamp: string } | null {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.LAST_SEARCH);
-    return stored ? JSON.parse(stored) : null;
-  } catch (error) {
-    console.error('Failed to load last search from localStorage:', error);
-    return null;
-  }
-}
-
-/**
- * Add search to history
- */
-export function addToSearchHistory(searchParams: Record<string, any>): void {
-  try {
-    const history = getSearchHistory();
-    const newEntry = {
-      params: searchParams,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Keep only last 10 searches
-    const updatedHistory = [newEntry, ...history].slice(0, 10);
-    localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(updatedHistory));
-  } catch (error) {
-    console.error('Failed to add to search history:', error);
-  }
-}
-
-/**
- * Get search history
- */
-export function getSearchHistory(): Array<{ params: Record<string, any>; timestamp: string }> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Failed to get search history:', error);
-    return [];
-  }
-}
-
-/**
- * Clear search history
- */
-export function clearSearchHistory(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEYS.SEARCH_HISTORY);
-  } catch (error) {
-    console.error('Failed to clear search history:', error);
   }
 }
 

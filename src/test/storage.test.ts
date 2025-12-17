@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers, saveLastSearch, loadLastSearch, addToSearchHistory, getSearchHistory, clearSearchHistory } from '../utils/storage';
+import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers } from '../utils/storage';
 
 describe('Storage Utilities', () => {
   beforeEach(() => {
@@ -77,59 +77,6 @@ describe('Storage Utilities', () => {
       // WHY: Empty object should not trigger resume prompt
       saveAnswers({});
       expect(hasSavedAnswers()).toBe(false);
-    });
-  });
-
-  describe('saveLastSearch and loadLastSearch', () => {
-    it('should save search with timestamp', () => {
-      // WHY: Track when searches were made for analytics/history
-      const searchParams = { location: 'Chicago, IL', eventType: 'Sports' };
-
-      saveLastSearch(searchParams);
-      const loaded = loadLastSearch();
-
-      expect(loaded?.params).toEqual(searchParams);
-      expect(loaded?.timestamp).toBeDefined();
-      expect(typeof loaded?.timestamp).toBe('string');
-    });
-
-    it('should return null when no last search exists', () => {
-      expect(loadLastSearch()).toBeNull();
-    });
-  });
-
-  describe('Search History', () => {
-    it('should add searches to history', () => {
-      // WHY: Users should see their recent searches
-      addToSearchHistory({ location: 'Boston' });
-      addToSearchHistory({ location: 'New York' });
-
-      const history = getSearchHistory();
-      expect(history).toHaveLength(2);
-      expect(history[0].params).toEqual({ location: 'New York' }); // Most recent first
-    });
-
-    it('should limit history to 10 items', () => {
-      // WHY: Prevent localStorage from growing unbounded
-      for (let i = 0; i < 15; i++) {
-        addToSearchHistory({ location: `City ${i}` });
-      }
-
-      const history = getSearchHistory();
-      expect(history).toHaveLength(10);
-    });
-
-    it('should clear search history', () => {
-      // WHY: Users may want to clear their search history
-      addToSearchHistory({ location: 'Test' });
-      clearSearchHistory();
-
-      const history = getSearchHistory();
-      expect(history).toEqual([]);
-    });
-
-    it('should return empty array when no history exists', () => {
-      expect(getSearchHistory()).toEqual([]);
     });
   });
 });
