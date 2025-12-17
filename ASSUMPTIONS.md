@@ -89,7 +89,7 @@ Explicitly **not** included to save time:
 - ❌ Calendar integration
 - ❌ Social sharing
 - ❌ Email notifications
-- ❌ Advanced filters (venue, price)
+- ❌ Advanced filters (venue)
 - ❌ Dark mode
 - ❌ Internationalization
 

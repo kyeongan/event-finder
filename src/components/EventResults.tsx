@@ -14,7 +14,6 @@ interface EventResultsProps {
  * - Table view with sorting
  * - Filtering by multiple criteria
  * - Relevance transparency tooltips
- * - Price range display
  * - Responsive design
  */
 export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver }) => {
@@ -22,7 +21,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
     search: '',
     city: '',
     genre: '',
-    priceRange: 'all',
   });
   const [sortBy, setSortBy] = useState<'date' | 'relevance' | 'name'>('relevance');
   const [showTooltipFor, setShowTooltipFor] = useState<string | null>(null);
@@ -50,25 +48,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
       filtered = filtered.filter((event) => event.genre === filters.genre);
     }
 
-    if (filters.priceRange !== 'all') {
-      filtered = filtered.filter((event) => {
-        if (!event.priceRanges || event.priceRanges.length === 0) {
-          return filters.priceRange === 'unknown';
-        }
-        const minPrice = event.priceRanges[0].min;
-        switch (filters.priceRange) {
-          case 'budget':
-            return minPrice < 50;
-          case 'moderate':
-            return minPrice >= 50 && minPrice < 150;
-          case 'premium':
-            return minPrice >= 150;
-          default:
-            return true;
-        }
-      });
-    }
-
     // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -84,14 +63,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
 
     return filtered;
   }, [events, filters, sortBy]);
-
-  const formatPrice = (event: Event): string => {
-    if (!event.priceRanges || event.priceRanges.length === 0) {
-      return 'Price TBA';
-    }
-    const { min, max, currency } = event.priceRanges[0];
-    return `${currency} $${min} - $${max}`;
-  };
 
   return (
     <div className="results-container">
@@ -113,14 +84,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
               {genre}
             </option>
           ))}
-        </select>
-
-        <select className="filter-select" value={filters.priceRange} onChange={(e) => setFilters({ ...filters, priceRange: e.target.value })}>
-          <option value="all">All Prices</option>
-          <option value="budget">Budget (&lt;$50)</option>
-          <option value="moderate">Moderate ($50-150)</option>
-          <option value="premium">Premium ($150+)</option>
-          <option value="unknown">Price TBA</option>
         </select>
 
         <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
@@ -145,7 +108,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
                 <th>Date & Time</th>
                 <th>Location</th>
                 <th>Genre</th>
-                <th>Price Range</th>
                 <th>Relevance</th>
                 <th>Actions</th>
               </tr>
@@ -178,7 +140,6 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
                     )}
                   </td>
                   <td>{event.genre || event.classification || '-'}</td>
-                  <td>{formatPrice(event)}</td>
                   <td>
                     <div className="relevance-cell" onMouseEnter={() => setShowTooltipFor(event.id)} onMouseLeave={() => setShowTooltipFor(null)}>
                       <div className="relevance-badge">

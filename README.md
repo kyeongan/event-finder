@@ -27,7 +27,7 @@ _Users can resume their previous search or start fresh_
 1. **Configurable Question Flow** - `src/config/questions.ts`
 2. **User Persistence** - localStorage with resume prompt
 3. **Result Transparency** - Relevance factors shown on each result
-4. **Result Filtering** - Filter by keyword, city, genre, price; sort by relevance/date/name
+4. **Result Filtering** - Filter by keyword, city, genre; sort by relevance/date/name
 5. **Error Handling** - User-friendly messages throughout
 6. **Reverse Proxy Backend** - Express protects API keys
 7. **React + TypeScript** - Full type safety

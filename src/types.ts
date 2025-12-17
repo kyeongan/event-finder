@@ -39,12 +39,6 @@ export interface Event {
   classification?: string;
   genre?: string;
   subGenre?: string;
-  priceRanges?: Array<{
-    type: string;
-    currency: string;
-    min: number;
-    max: number;
-  }>;
   status?: string;
   relevanceFactors: {
     position: number;

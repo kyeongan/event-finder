@@ -93,7 +93,6 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
       classification: event.classifications?.[0]?.segment?.name,
       genre: event.classifications?.[0]?.genre?.name,
       subGenre: event.classifications?.[0]?.subGenre?.name,
-      priceRanges: event.priceRanges,
       status: event.dates?.status?.code,
       // Relevance factors for transparency
       relevanceFactors: {

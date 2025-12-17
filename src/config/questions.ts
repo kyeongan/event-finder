@@ -87,21 +87,6 @@ export const questions: Question[] = [
     helpText: 'Leave blank to see all event types',
   },
   {
-    id: 'priceRange',
-    type: 'select',
-    question: "What's your budget?",
-    placeholder: 'Select a price range',
-    required: false,
-    options: [
-      { value: 'free', label: 'Free', emoji: '🆓' },
-      { value: '0-50', label: 'Under $50', emoji: '💵' },
-      { value: '50-100', label: '$50 - $100', emoji: '💵' },
-      { value: '100-200', label: '$100 - $200', emoji: '💰' },
-      { value: '200+', label: '$200+', emoji: '💎' },
-    ],
-    helpText: 'Leave blank to see all price ranges',
-  },
-  {
     id: 'keywords',
     type: 'text',
     question: 'Any specific keywords?',
