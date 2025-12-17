@@ -106,14 +106,6 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
   };
 
   const handleNext = () => {
-    // Special validation for autocomplete location field
-    if (currentQuestion.id === 'location' && currentQuestion.type === 'autocomplete') {
-      if (!validatedCities.has('location')) {
-        setErrors({ ...errors, location: 'Please select a city from the suggestions' });
-        return;
-      }
-    }
-
     // Validate current answer
     const validationErrors = validateAnswers({ [currentQuestion.id]: currentValue });
 

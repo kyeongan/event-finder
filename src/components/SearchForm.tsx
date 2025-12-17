@@ -75,11 +75,6 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!location.trim()) {
-      alert('Please enter a location');
-      return;
-    }
-
     onSearch({ location, dateRange, eventType });
   };
 
@@ -101,7 +96,6 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
                 ref={inputRef}
                 id="location"
                 type="text"
-                required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 onFocus={() => location.length >= 2 && filteredCities.length > 0 && setShowSuggestions(true)}
