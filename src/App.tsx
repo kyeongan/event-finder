@@ -6,6 +6,7 @@ import { Loading } from './components/Loading';
 import { eventApi } from './services/api';
 import { Event } from './types';
 import './App.css';
+import { SearchForm } from './components/SearchForm';
 
 export interface SearchParams {
   location: string;
@@ -75,6 +76,7 @@ function App() {
               </button>
             </div>
           )}
+          <SearchForm onSearch={handleSearch} />
 
           {stage === 'search' && <QuestionFlow onComplete={handleSearch} />}
 
