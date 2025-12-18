@@ -8,7 +8,6 @@
  * - Different input types (select, text, multiselect)
  * - Custom validation
  * - Conditional display based on previous answers
- * - Dynamic options (can be loaded from API)
  */
 
 export type QuestionType = 'select' | 'text' | 'multiselect' | 'autocomplete';
@@ -42,7 +41,7 @@ export const questions: Question[] = [
     type: 'autocomplete',
     question: 'Where are you looking for events?',
     placeholder: 'e.g., New York, NY',
-    required: true,
+    required: false,
     helpText: 'Start typing to see suggestions',
     validation: (value: string) => {
       if (!value || value.trim().length === 0) {
@@ -85,6 +84,38 @@ export const questions: Question[] = [
       { value: 'Film', label: 'Film', emoji: '🎬' },
     ],
     helpText: 'Leave blank to see all event types',
+  },
+  {
+    id: 'musicGenre',
+    type: 'select',
+    question: 'What music genres do you prefer?',
+    placeholder: 'Pick a genre',
+    required: false,
+    options: [
+      { value: 'rock', label: 'Rock', emoji: '🎸' },
+      { value: 'pop', label: 'Pop', emoji: '🎤' },
+      { value: 'jazz', label: 'Jazz', emoji: '🎷' },
+      { value: 'classical', label: 'Classical', emoji: '🎼' },
+    ],
+    helpText: 'Shown only when you pick Music above',
+    showIf: (answers: Record<string, any>) => answers.eventType === 'Music',
+  },
+  {
+    id: 'sportType',
+    type: 'select',
+    question: 'What sport type do you prefer?',
+    placeholder: 'Pick a sport',
+    required: false,
+    options: [
+      { value: 'golf', label: 'Golf', emoji: '⛳' },
+      { value: 'tennis', label: 'Tennis', emoji: '🎾' },
+      { value: 'football', label: 'Football', emoji: '🏈' },
+      { value: 'basketball', label: 'Basketball', emoji: '🏀' },
+      { value: 'baseball', label: 'Baseball', emoji: '⚾' },
+      { value: 'soccer', label: 'Soccer', emoji: '⚽' },
+    ],
+    helpText: 'Shown only when you pick Sports above',
+    showIf: (answers: Record<string, any>) => answers.eventType === 'Sports',
   },
   {
     id: 'keywords',
@@ -156,6 +187,8 @@ export function answersToSearchParams(answers: Record<string, any>) {
     location: answers.location || '',
     dateRange: answers.dateRange || '',
     eventType: answers.eventType || '',
+    musicGenre: answers.musicGenre || '',
+    sportType: answers.sportType || '',
     keywords: answers.keywords || '',
   };
 }
