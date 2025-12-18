@@ -76,7 +76,7 @@ function App() {
               </button>
             </div>
           )}
-          <SearchForm onSearch={handleSearch} />
+          {/* <SearchForm onSearch={handleSearch} /> */}
 
           {stage === 'search' && <QuestionFlow onComplete={handleSearch} />}
 
