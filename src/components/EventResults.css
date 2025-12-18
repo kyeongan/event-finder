@@ -91,6 +91,7 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+  text-align: left;
 }
 
 .event-image {
@@ -112,17 +113,46 @@
 }
 
 .relevance-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  background: #edf2f7;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #2d3748;
+  gap: 8px;
   cursor: help;
 }
+
+.relevance-score {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: center;
+}
+
+/* Color coding for relevance scores */
+.score-0 {
+  background-color: #fee;
+  color: #c33;
+} /* 0-19: Red */
+.score-1 {
+  background-color: #fed;
+  color: #c63;
+} /* 20-39: Orange */
+.score-2 {
+  background-color: #ffd;
+  color: #963;
+} /* 40-59: Yellow */
+.score-3 {
+  background-color: #dfd;
+  color: #373;
+} /* 60-79: Light Green */
+.score-4 {
+  background-color: #cfc;
+  color: #161;
+} /* 80-99: Dark Green */
+.score-5 {
+  background-color: #cfc;
+  color: #161;
+} /* 100: Perfect Green */
 
 .relevance-cell {
   position: relative;
@@ -202,6 +232,34 @@
 
 .tooltip-icon {
   font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.score-highlight {
+  font-weight: 700;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.tooltip-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 8px 0;
+}
+
+.tooltip-section-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tooltip-points {
+  font-weight: 600;
+  color: #667eea;
+  margin-left: auto;
 }
 
 .button-link {

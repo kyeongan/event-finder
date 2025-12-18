@@ -56,8 +56,11 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
         case 'name':
           return a.name.localeCompare(b.name);
         case 'relevance':
-        default:
-          return a.relevanceFactors.position - b.relevanceFactors.position;
+        default: {
+          // Sort by relevance score (higher is better), with position as tiebreaker
+          const scoreDiff = b.relevanceScore - a.relevanceScore;
+          return scoreDiff !== 0 ? scoreDiff : a.relevanceFactors.position - b.relevanceFactors.position;
+        }
       }
     });
 
@@ -86,7 +89,7 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
           ))}
         </select>
 
-        <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+        <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as 'date' | 'relevance' | 'name')}>
           <option value="relevance">Sort by Relevance</option>
           <option value="date">Sort by Date</option>
           <option value="name">Sort by Name</option>
@@ -144,34 +147,54 @@ export const EventResults: React.FC<EventResultsProps> = ({ events, onStartOver 
                     <div className="relevance-cell" onMouseEnter={() => setShowTooltipFor(event.id)} onMouseLeave={() => setShowTooltipFor(null)}>
                       <div className="relevance-badge">
                         #{event.relevanceFactors.position}
-                        <span className="tooltip-icon">ℹ️</span>
+                        {/* <span className="tooltip-icon">ℹ️</span> */}
+                        <div className={`relevance-score score-${Math.floor(event.relevanceScore / 20)}`}>{event.relevanceScore}</div>
                       </div>
                       {showTooltipFor === event.id && (
                         <div className="relevance-tooltip">
-                          <div className="tooltip-header">Relevance Score</div>
+                          <div className="tooltip-header">Relevance Breakdown</div>
                           <div className="tooltip-content">
+                            <div className="tooltip-item">
+                              <span className="tooltip-label">Overall Score:</span>
+                              <span className="tooltip-value score-highlight">{event.relevanceScore}/100</span>
+                            </div>
                             <div className="tooltip-item">
                               <span className="tooltip-label">API Position:</span>
                               <span className="tooltip-value">#{event.relevanceFactors.position}</span>
                             </div>
+                            <div className="tooltip-divider"></div>
+                            <div className="tooltip-section-title">Match Factors:</div>
                             {event.relevanceFactors.hasKeywordMatch !== null && (
                               <div className={`tooltip-item ${event.relevanceFactors.hasKeywordMatch ? 'match' : 'no-match'}`}>
                                 <span className="match-icon">{event.relevanceFactors.hasKeywordMatch ? '✓' : '✗'}</span>
                                 <span>Keyword match</span>
+                                <span className="tooltip-points">{event.relevanceFactors.hasKeywordMatch ? '+30' : '+0'}</span>
                               </div>
                             )}
                             {event.relevanceFactors.matchesClassification !== null && (
                               <div className={`tooltip-item ${event.relevanceFactors.matchesClassification ? 'match' : 'no-match'}`}>
                                 <span className="match-icon">{event.relevanceFactors.matchesClassification ? '✓' : '✗'}</span>
                                 <span>Event type match</span>
+                                <span className="tooltip-points">{event.relevanceFactors.matchesClassification ? '+25' : '+0'}</span>
                               </div>
                             )}
                             {event.relevanceFactors.matchesCity !== null && (
                               <div className={`tooltip-item ${event.relevanceFactors.matchesCity ? 'match' : 'no-match'}`}>
                                 <span className="match-icon">{event.relevanceFactors.matchesCity ? '✓' : '✗'}</span>
                                 <span>City match</span>
+                                <span className="tooltip-points">{event.relevanceFactors.matchesCity ? '+25' : '+0'}</span>
                               </div>
                             )}
+                            <div className="tooltip-item">
+                              <span className="match-icon">•</span>
+                              <span>Position bonus</span>
+                              <span className="tooltip-points">+{event.relevanceFactors.position <= 10 ? (10 - event.relevanceFactors.position) * 2 : 0}</span>
+                            </div>
+                            <div className="tooltip-item">
+                              <span className="match-icon">•</span>
+                              <span>Base score</span>
+                              <span className="tooltip-points">+20</span>
+                            </div>
                           </div>
                         </div>
                       )}

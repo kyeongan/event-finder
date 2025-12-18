@@ -21,6 +21,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { calculateRelevanceFactors, calculateRelevanceScore } from './relevance';
 
 dotenv.config();
 
@@ -79,31 +80,42 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
 
     // Transform the response to include relevance scoring
     const events = response.data._embedded?.events || [];
-    const transformedEvents = events.map((event: any, index: number) => ({
-      id: event.id,
-      name: event.name,
-      url: event.url,
-      image: event.images?.[0]?.url,
-      date: event.dates?.start?.localDate,
-      time: event.dates?.start?.localTime,
-      venue: event._embedded?.venues?.[0]?.name,
-      city: event._embedded?.venues?.[0]?.city?.name,
-      state: event._embedded?.venues?.[0]?.state?.stateCode,
-      country: event._embedded?.venues?.[0]?.country?.countryCode,
-      classification: event.classifications?.[0]?.segment?.name,
-      genre: event.classifications?.[0]?.genre?.name,
-      subGenre: event.classifications?.[0]?.subGenre?.name,
-      status: event.dates?.status?.code,
-      // Relevance factors for transparency
-      relevanceFactors: {
-        position: index + 1,
-        hasKeywordMatch: keyword ? event.name.toLowerCase().includes(keyword.toLowerCase()) : null,
-        matchesClassification: classificationName ? event.classifications?.[0]?.segment?.name?.toLowerCase() === classificationName.toLowerCase() : null,
-        matchesCity: city
-          ? event._embedded?.venues?.[0]?.city?.name?.toLowerCase().includes(city.toLowerCase()) || city.toLowerCase().includes(event._embedded?.venues?.[0]?.city?.name?.toLowerCase() || '')
-          : null,
-      },
-    }));
+    const transformedEvents = events.map((event: any, index: number) => {
+      const eventData = {
+        name: event.name,
+        city: event._embedded?.venues?.[0]?.city?.name,
+        classification: event.classifications?.[0]?.segment?.name,
+      };
+
+      const searchCriteria = {
+        keyword: keyword as string | undefined,
+        city: city as string | undefined,
+        classificationName: classificationName as string | undefined,
+      };
+
+      // Use relevance module to calculate factors and score
+      const relevanceFactors = calculateRelevanceFactors(eventData, searchCriteria, index + 1);
+      const relevanceScore = calculateRelevanceScore(relevanceFactors);
+
+      return {
+        id: event.id,
+        name: event.name,
+        url: event.url,
+        image: event.images?.[0]?.url,
+        date: event.dates?.start?.localDate,
+        time: event.dates?.start?.localTime,
+        venue: event._embedded?.venues?.[0]?.name,
+        city: event._embedded?.venues?.[0]?.city?.name,
+        state: event._embedded?.venues?.[0]?.state?.stateCode,
+        country: event._embedded?.venues?.[0]?.country?.countryCode,
+        classification: event.classifications?.[0]?.segment?.name,
+        genre: event.classifications?.[0]?.genre?.name,
+        subGenre: event.classifications?.[0]?.subGenre?.name,
+        status: event.dates?.status?.code,
+        relevanceFactors,
+        relevanceScore,
+      };
+    });
 
     res.json({
       events: transformedEvents,

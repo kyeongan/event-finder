@@ -46,6 +46,7 @@ export interface Event {
     matchesClassification: boolean | null;
     matchesCity: boolean | null;
   };
+  relevanceScore: number; // 0-100 score calculated by backend
 }
 
 export interface EventSearchResponse {

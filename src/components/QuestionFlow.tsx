@@ -302,9 +302,7 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
         </div>
 
         <div className="question-input-container">
-          <p>start</p>
           {renderInput()}
-          <p>end</p>
           {errors[currentQuestion.id] && <div className="error-message">{errors[currentQuestion.id]}</div>}
         </div>
 
