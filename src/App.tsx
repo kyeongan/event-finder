@@ -27,8 +27,13 @@ function App() {
   // Initialize state from localStorage if available
   const savedState = loadAppState();
   
+  // Validate saved stage value
+  const isValidStage = (stage: any): stage is 'search' | 'loading' | 'results' | 'no-results' => {
+    return ['search', 'loading', 'results', 'no-results'].includes(stage);
+  };
+  
   const [stage, setStage] = useState<'search' | 'loading' | 'results' | 'no-results'>(
-    (savedState?.stage as 'search' | 'loading' | 'results' | 'no-results') || 'search'
+    savedState?.stage && isValidStage(savedState.stage) ? savedState.stage : 'search'
   );
   const [events, setEvents] = useState<Event[]>(savedState?.events || []);
   const [error, setError] = useState<string | null>(null);
