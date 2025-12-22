@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   ANSWERS: 'eventFinder_answers',
   LAST_SEARCH: 'eventFinder_lastSearch',
   SEARCH_HISTORY: 'eventFinder_searchHistory',
+  APP_STATE: 'eventFinder_appState',
 } as const;
 
 /**
@@ -123,4 +124,47 @@ export function clearSearchHistory(): void {
 export function hasSavedAnswers(): boolean {
   const answers = loadAnswers();
   return answers !== null && Object.keys(answers).length > 0;
+}
+
+/**
+ * Save app state (stage, events, lastSearchParams) to localStorage
+ */
+export function saveAppState(appState: {
+  stage: string;
+  events: any[];
+  lastSearchParams: any;
+}): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.APP_STATE, JSON.stringify(appState));
+  } catch (error) {
+    console.error('Failed to save app state to localStorage:', error);
+  }
+}
+
+/**
+ * Load app state from localStorage
+ */
+export function loadAppState(): {
+  stage: string;
+  events: any[];
+  lastSearchParams: any;
+} | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.APP_STATE);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Failed to load app state from localStorage:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear saved app state
+ */
+export function clearAppState(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.APP_STATE);
+  } catch (error) {
+    console.error('Failed to clear app state from localStorage:', error);
+  }
 }

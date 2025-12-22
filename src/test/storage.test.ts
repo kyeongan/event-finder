@@ -9,7 +9,20 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers, saveLastSearch, loadLastSearch, addToSearchHistory, getSearchHistory, clearSearchHistory } from '../utils/storage';
+import { 
+  saveAnswers, 
+  loadAnswers, 
+  clearAnswers, 
+  hasSavedAnswers, 
+  saveLastSearch, 
+  loadLastSearch, 
+  addToSearchHistory, 
+  getSearchHistory, 
+  clearSearchHistory,
+  saveAppState,
+  loadAppState,
+  clearAppState
+} from '../utils/storage';
 
 describe('Storage Utilities', () => {
   beforeEach(() => {
@@ -130,6 +143,77 @@ describe('Storage Utilities', () => {
 
     it('should return empty array when no history exists', () => {
       expect(getSearchHistory()).toEqual([]);
+    });
+  });
+
+  describe('App State Persistence', () => {
+    it('should save and retrieve app state correctly', () => {
+      // WHY: Users should not lose their results when refreshing the page
+      const testState = {
+        stage: 'results',
+        events: [
+          { id: '1', name: 'Concert', url: 'http://example.com' },
+          { id: '2', name: 'Game', url: 'http://example.com' }
+        ],
+        lastSearchParams: { location: 'New York, NY', eventType: 'Music' }
+      };
+
+      saveAppState(testState);
+      const loaded = loadAppState();
+
+      expect(loaded).toEqual(testState);
+    });
+
+    it('should return null when no app state is saved', () => {
+      // WHY: Initial load should handle missing state gracefully
+      const loaded = loadAppState();
+      expect(loaded).toBeNull();
+    });
+
+    it('should handle invalid JSON gracefully', () => {
+      // WHY: Corrupted localStorage should not crash the app
+      localStorage.setItem('eventFinder_appState', 'invalid-json{');
+      const loaded = loadAppState();
+      expect(loaded).toBeNull();
+    });
+
+    it('should clear saved app state', () => {
+      // WHY: Users should start fresh when initiating a new search
+      saveAppState({
+        stage: 'results',
+        events: [{ id: '1', name: 'Test', url: 'http://example.com' }],
+        lastSearchParams: { location: 'Test' }
+      });
+      clearAppState();
+
+      const loaded = loadAppState();
+      expect(loaded).toBeNull();
+    });
+
+    it('should preserve app state across page refresh', () => {
+      // WHY: This is the core requirement - state must survive refresh
+      const state = {
+        stage: 'results',
+        events: [
+          { id: '123', name: 'Summer Festival', url: 'http://example.com' }
+        ],
+        lastSearchParams: { 
+          location: 'Los Angeles, CA',
+          dateRange: 'next-week',
+          eventType: 'Festival'
+        }
+      };
+
+      saveAppState(state);
+      
+      // Simulate page refresh by loading state
+      const rehydrated = loadAppState();
+      
+      expect(rehydrated).not.toBeNull();
+      expect(rehydrated?.stage).toBe('results');
+      expect(rehydrated?.events).toHaveLength(1);
+      expect(rehydrated?.events[0].name).toBe('Summer Festival');
+      expect(rehydrated?.lastSearchParams.location).toBe('Los Angeles, CA');
     });
   });
 });
