@@ -5,6 +5,14 @@
  * Users can resume where they left off even after closing the browser.
  */
 
+import { Event } from '../types';
+
+export interface AppState {
+  stage: 'search' | 'loading' | 'results' | 'no-results';
+  events: Event[];
+  lastSearchParams: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
 const STORAGE_KEYS = {
   ANSWERS: 'eventFinder_answers',
   LAST_SEARCH: 'eventFinder_lastSearch',
@@ -129,11 +137,7 @@ export function hasSavedAnswers(): boolean {
 /**
  * Save app state (stage, events, lastSearchParams) to localStorage
  */
-export function saveAppState(appState: {
-  stage: string;
-  events: any[];
-  lastSearchParams: any;
-}): void {
+export function saveAppState(appState: AppState): void {
   try {
     localStorage.setItem(STORAGE_KEYS.APP_STATE, JSON.stringify(appState));
   } catch (error) {
@@ -144,11 +148,7 @@ export function saveAppState(appState: {
 /**
  * Load app state from localStorage
  */
-export function loadAppState(): {
-  stage: string;
-  events: any[];
-  lastSearchParams: any;
-} | null {
+export function loadAppState(): AppState | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.APP_STATE);
     return stored ? JSON.parse(stored) : null;

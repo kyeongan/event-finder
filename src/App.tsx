@@ -5,7 +5,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Loading } from './components/Loading';
 import { eventApi } from './services/api';
 import { Event } from './types';
-import { saveAppState, loadAppState, clearAppState } from './utils/storage';
+import { saveAppState, loadAppState, clearAppState, AppState } from './utils/storage';
 import './App.css';
 
 export interface SearchParams {
@@ -39,11 +39,12 @@ function App() {
   // Save app state to localStorage whenever it changes
   useEffect(() => {
     if (stage === 'results' || stage === 'no-results') {
-      saveAppState({
+      const appState: AppState = {
         stage,
         events,
         lastSearchParams,
-      });
+      };
+      saveAppState(appState);
     } else if (stage === 'search') {
       // Clear saved state when starting a new search
       clearAppState();

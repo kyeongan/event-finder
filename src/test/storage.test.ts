@@ -21,7 +21,8 @@ import {
   clearSearchHistory,
   saveAppState,
   loadAppState,
-  clearAppState
+  clearAppState,
+  AppState
 } from '../utils/storage';
 
 describe('Storage Utilities', () => {
@@ -149,11 +150,31 @@ describe('Storage Utilities', () => {
   describe('App State Persistence', () => {
     it('should save and retrieve app state correctly', () => {
       // WHY: Users should not lose their results when refreshing the page
-      const testState = {
+      const testState: AppState = {
         stage: 'results',
         events: [
-          { id: '1', name: 'Concert', url: 'http://example.com' },
-          { id: '2', name: 'Game', url: 'http://example.com' }
+          { 
+            id: '1', 
+            name: 'Concert', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 1,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          },
+          { 
+            id: '2', 
+            name: 'Game', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 2,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          }
         ],
         lastSearchParams: { location: 'New York, NY', eventType: 'Music' }
       };
@@ -179,11 +200,24 @@ describe('Storage Utilities', () => {
 
     it('should clear saved app state', () => {
       // WHY: Users should start fresh when initiating a new search
-      saveAppState({
+      const testState: AppState = {
         stage: 'results',
-        events: [{ id: '1', name: 'Test', url: 'http://example.com' }],
+        events: [
+          { 
+            id: '1', 
+            name: 'Test', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 1,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          }
+        ],
         lastSearchParams: { location: 'Test' }
-      });
+      };
+      saveAppState(testState);
       clearAppState();
 
       const loaded = loadAppState();
@@ -192,10 +226,20 @@ describe('Storage Utilities', () => {
 
     it('should preserve app state across page refresh', () => {
       // WHY: This is the core requirement - state must survive refresh
-      const state = {
+      const state: AppState = {
         stage: 'results',
         events: [
-          { id: '123', name: 'Summer Festival', url: 'http://example.com' }
+          { 
+            id: '123', 
+            name: 'Summer Festival', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 1,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          }
         ],
         lastSearchParams: { 
           location: 'Los Angeles, CA',
@@ -213,7 +257,7 @@ describe('Storage Utilities', () => {
       expect(rehydrated?.stage).toBe('results');
       expect(rehydrated?.events).toHaveLength(1);
       expect(rehydrated?.events[0].name).toBe('Summer Festival');
-      expect(rehydrated?.lastSearchParams.location).toBe('Los Angeles, CA');
+      expect(rehydrated?.lastSearchParams?.location).toBe('Los Angeles, CA');
     });
   });
 });
