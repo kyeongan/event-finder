@@ -77,9 +77,17 @@ app.post('/api/events/search', async (req: Request, res: Response) => {
   try {
     const { keyword, city, stateCode, classificationName, startDateTime, endDateTime, size = 20, page = 0 }: EventSearchParams = req.body;
 
-    // Validate and coerce input types
-    const validatedSize = typeof size === 'number' ? size : parseInt(String(size), 10) || 20;
-    const validatedPage = typeof page === 'number' ? page : parseInt(String(page), 10) || 0;
+    // Validate and coerce input types with bounds checking
+    let validatedSize = typeof size === 'number' ? size : parseInt(String(size), 10);
+    let validatedPage = typeof page === 'number' ? page : parseInt(String(page), 10);
+    
+    // Handle invalid numbers and apply bounds
+    if (isNaN(validatedSize) || validatedSize < 1 || validatedSize > 100) {
+      validatedSize = 20; // Default to 20 if invalid
+    }
+    if (isNaN(validatedPage) || validatedPage < 0) {
+      validatedPage = 0; // Default to 0 if invalid
+    }
 
     // Build query parameters
     const params: any = {
@@ -188,7 +196,14 @@ app.post('/api/cities/search', async (req: Request, res: Response) => {
       return res.json({ cities: [] });
     }
 
-    const validatedLimit = typeof limit === 'number' ? limit : parseInt(String(limit), 10) || 10;
+    // Validate input types with bounds checking
+    let validatedLimit = typeof limit === 'number' ? limit : parseInt(String(limit), 10);
+    
+    // Handle invalid numbers and apply bounds (limit to 1-20 range)
+    if (isNaN(validatedLimit) || validatedLimit < 1) {
+      validatedLimit = 10; // Default to 10 if invalid
+    }
+    validatedLimit = Math.min(validatedLimit, 20); // Cap at 20 to prevent performance issues
 
     // Simple in-memory city data (could be replaced with a database or geocoding API)
     const cities = [
@@ -233,7 +248,7 @@ app.post('/api/cities/search', async (req: Request, res: Response) => {
     ];
 
     const lowerQuery = query.toLowerCase();
-    const maxResults = Math.min(validatedLimit, 20);
+    const maxResults = validatedLimit;
 
     const matchingCities = cities
       .filter(
