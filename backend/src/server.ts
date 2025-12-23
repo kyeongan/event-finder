@@ -77,11 +77,15 @@ app.post('/api/events/search', async (req: Request, res: Response) => {
   try {
     const { keyword, city, stateCode, classificationName, startDateTime, endDateTime, size = 20, page = 0 }: EventSearchParams = req.body;
 
+    // Validate and coerce input types
+    const validatedSize = typeof size === 'number' ? size : parseInt(String(size), 10) || 20;
+    const validatedPage = typeof page === 'number' ? page : parseInt(String(page), 10) || 0;
+
     // Build query parameters
     const params: any = {
       apikey: TICKETMASTER_API_KEY,
-      size,
-      page,
+      size: validatedSize,
+      page: validatedPage,
     };
 
     if (keyword) params.keyword = keyword;
@@ -179,9 +183,12 @@ app.post('/api/cities/search', async (req: Request, res: Response) => {
   try {
     const { query, limit = 10 } = req.body;
 
+    // Validate input types
     if (!query || typeof query !== 'string' || query.length < 2) {
       return res.json({ cities: [] });
     }
+
+    const validatedLimit = typeof limit === 'number' ? limit : parseInt(String(limit), 10) || 10;
 
     // Simple in-memory city data (could be replaced with a database or geocoding API)
     const cities = [
@@ -226,7 +233,7 @@ app.post('/api/cities/search', async (req: Request, res: Response) => {
     ];
 
     const lowerQuery = query.toLowerCase();
-    const maxResults = Math.min(Number(limit) || 10, 20);
+    const maxResults = Math.min(validatedLimit, 20);
 
     const matchingCities = cities
       .filter(

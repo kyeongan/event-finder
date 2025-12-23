@@ -3,6 +3,8 @@ import { getVisibleQuestions, validateAnswers, answersToSearchParams } from '../
 import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers } from '../utils/storage';
 import './QuestionFlow.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
 interface QuestionFlowProps {
   onComplete: (answers: Record<string, any>) => void;
   initialAnswers?: Record<string, any>;
@@ -65,7 +67,7 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
         // Using POST to send query in request body instead of URL parameters
         // Pros: More secure, no URL length limits, better for complex queries
         // Cons: Cannot cache as effectively, not bookmarkable
-        const response = await fetch(`http://localhost:3001/api/cities/search`, {
+        const response = await fetch(`${API_BASE_URL}/cities/search`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
