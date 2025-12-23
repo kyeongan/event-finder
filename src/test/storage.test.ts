@@ -14,11 +14,6 @@ import {
   loadAnswers, 
   clearAnswers, 
   hasSavedAnswers, 
-  saveLastSearch, 
-  loadLastSearch, 
-  addToSearchHistory, 
-  getSearchHistory, 
-  clearSearchHistory,
   saveAppState,
   loadAppState,
   clearAppState,
@@ -31,7 +26,7 @@ describe('Storage Utilities', () => {
     localStorage.clear();
   });
 
-  describe('saveAnswers and loadAnswers', () => {
+  describe('saveAnswers and loadAnswers (consolidated)', () => {
     it('should save and retrieve answers correctly', () => {
       // WHY: Core functionality - users must be able to save progress
       const testAnswers = { location: 'New York, NY', eventType: 'Music' };
@@ -50,7 +45,7 @@ describe('Storage Utilities', () => {
 
     it('should handle invalid JSON gracefully', () => {
       // WHY: Corrupted localStorage should not crash the app
-      localStorage.setItem('eventFinder_answers', 'invalid-json{');
+      localStorage.setItem('eventFinder_appState', 'invalid-json{');
       const loaded = loadAnswers();
       expect(loaded).toBeNull();
     });
@@ -63,16 +58,43 @@ describe('Storage Utilities', () => {
       const loaded = loadAnswers();
       expect(loaded).toEqual({ location: 'New York, NY' });
     });
+
+    it('should preserve app state when saving answers', () => {
+      // WHY: Saving answers should not lose other app state
+      const initialState: AppState = {
+        stage: 'results',
+        events: [],
+        lastSearchParams: { location: 'Test' },
+      };
+      saveAppState(initialState);
+
+      saveAnswers({ location: 'New York, NY' });
+
+      const state = loadAppState();
+      expect(state?.answers).toEqual({ location: 'New York, NY' });
+      expect(state?.stage).toBe('results');
+      expect(state?.lastSearchParams).toEqual({ location: 'Test' });
+    });
   });
 
   describe('clearAnswers', () => {
-    it('should remove saved answers', () => {
-      // WHY: Users need to start fresh after completing a search
-      saveAnswers({ location: 'Test' });
+    it('should remove saved answers but keep app state', () => {
+      // WHY: Clear answers independently without losing results
+      const state: AppState = {
+        stage: 'results',
+        events: [],
+        lastSearchParams: { location: 'Test' },
+        answers: { location: 'New York' },
+      };
+      saveAppState(state);
+
       clearAnswers();
 
       const loaded = loadAnswers();
+      const appState = loadAppState();
       expect(loaded).toBeNull();
+      expect(appState?.stage).toBe('results');
+      expect(appState?.lastSearchParams).toEqual({ location: 'Test' });
     });
   });
 
@@ -94,60 +116,7 @@ describe('Storage Utilities', () => {
     });
   });
 
-  describe('saveLastSearch and loadLastSearch', () => {
-    it('should save search with timestamp', () => {
-      // WHY: Track when searches were made for analytics/history
-      const searchParams = { location: 'Chicago, IL', eventType: 'Sports' };
-
-      saveLastSearch(searchParams);
-      const loaded = loadLastSearch();
-
-      expect(loaded?.params).toEqual(searchParams);
-      expect(loaded?.timestamp).toBeDefined();
-      expect(typeof loaded?.timestamp).toBe('string');
-    });
-
-    it('should return null when no last search exists', () => {
-      expect(loadLastSearch()).toBeNull();
-    });
-  });
-
-  describe('Search History', () => {
-    it('should add searches to history', () => {
-      // WHY: Users should see their recent searches
-      addToSearchHistory({ location: 'Boston' });
-      addToSearchHistory({ location: 'New York' });
-
-      const history = getSearchHistory();
-      expect(history).toHaveLength(2);
-      expect(history[0].params).toEqual({ location: 'New York' }); // Most recent first
-    });
-
-    it('should limit history to 10 items', () => {
-      // WHY: Prevent localStorage from growing unbounded
-      for (let i = 0; i < 15; i++) {
-        addToSearchHistory({ location: `City ${i}` });
-      }
-
-      const history = getSearchHistory();
-      expect(history).toHaveLength(10);
-    });
-
-    it('should clear search history', () => {
-      // WHY: Users may want to clear their search history
-      addToSearchHistory({ location: 'Test' });
-      clearSearchHistory();
-
-      const history = getSearchHistory();
-      expect(history).toEqual([]);
-    });
-
-    it('should return empty array when no history exists', () => {
-      expect(getSearchHistory()).toEqual([]);
-    });
-  });
-
-  describe('App State Persistence', () => {
+  describe('App State Persistence (consolidated storage)', () => {
     it('should save and retrieve app state correctly', () => {
       // WHY: Users should not lose their results when refreshing the page
       const testState: AppState = {

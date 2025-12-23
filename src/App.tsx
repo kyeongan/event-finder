@@ -44,10 +44,12 @@ function App() {
   // Save app state to localStorage whenever it changes
   useEffect(() => {
     if (stage === 'results' || stage === 'no-results') {
+      const currentState = loadAppState();
       const appState: AppState = {
         stage,
         events,
         lastSearchParams,
+        answers: currentState?.answers, // Preserve answers
       };
       saveAppState(appState);
     } else if (stage === 'search') {

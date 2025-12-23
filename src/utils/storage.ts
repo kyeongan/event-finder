@@ -11,33 +11,38 @@ export interface AppState {
   stage: 'search' | 'loading' | 'results' | 'no-results';
   events: Event[];
   lastSearchParams: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  answers?: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const STORAGE_KEYS = {
-  ANSWERS: 'eventFinder_answers',
-  LAST_SEARCH: 'eventFinder_lastSearch',
-  SEARCH_HISTORY: 'eventFinder_searchHistory',
   APP_STATE: 'eventFinder_appState',
 } as const;
 
 /**
- * Save answers to localStorage
+ * Save answers to localStorage (consolidated into APP_STATE)
  */
-export function saveAnswers(answers: Record<string, any>): void {
+export function saveAnswers(answers: Record<string, any>): void { // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
-    localStorage.setItem(STORAGE_KEYS.ANSWERS, JSON.stringify(answers));
+    const currentState = loadAppState();
+    const updatedState: AppState = {
+      stage: currentState?.stage || 'search',
+      events: currentState?.events || [],
+      lastSearchParams: currentState?.lastSearchParams || null,
+      answers,
+    };
+    localStorage.setItem(STORAGE_KEYS.APP_STATE, JSON.stringify(updatedState));
   } catch (error) {
     console.error('Failed to save answers to localStorage:', error);
   }
 }
 
 /**
- * Load answers from localStorage
+ * Load answers from localStorage (consolidated from APP_STATE)
  */
-export function loadAnswers(): Record<string, any> | null {
+export function loadAnswers(): Record<string, any> | null { // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.ANSWERS);
-    return stored ? JSON.parse(stored) : null;
+    const state = loadAppState();
+    return state?.answers || null;
   } catch (error) {
     console.error('Failed to load answers from localStorage:', error);
     return null;
@@ -45,84 +50,20 @@ export function loadAnswers(): Record<string, any> | null {
 }
 
 /**
- * Clear saved answers
+ * Clear saved answers (clears answers from APP_STATE)
  */
 export function clearAnswers(): void {
   try {
-    localStorage.removeItem(STORAGE_KEYS.ANSWERS);
+    const currentState = loadAppState();
+    if (currentState) {
+      const updatedState: AppState = {
+        ...currentState,
+        answers: undefined,
+      };
+      localStorage.setItem(STORAGE_KEYS.APP_STATE, JSON.stringify(updatedState));
+    }
   } catch (error) {
     console.error('Failed to clear answers from localStorage:', error);
-  }
-}
-
-/**
- * Save last search parameters
- */
-export function saveLastSearch(searchParams: Record<string, any>): void {
-  try {
-    const searchData = {
-      params: searchParams,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEYS.LAST_SEARCH, JSON.stringify(searchData));
-  } catch (error) {
-    console.error('Failed to save last search to localStorage:', error);
-  }
-}
-
-/**
- * Load last search parameters
- */
-export function loadLastSearch(): { params: Record<string, any>; timestamp: string } | null {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.LAST_SEARCH);
-    return stored ? JSON.parse(stored) : null;
-  } catch (error) {
-    console.error('Failed to load last search from localStorage:', error);
-    return null;
-  }
-}
-
-/**
- * Add search to history
- */
-export function addToSearchHistory(searchParams: Record<string, any>): void {
-  try {
-    const history = getSearchHistory();
-    const newEntry = {
-      params: searchParams,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Keep only last 10 searches
-    const updatedHistory = [newEntry, ...history].slice(0, 10);
-    localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(updatedHistory));
-  } catch (error) {
-    console.error('Failed to add to search history:', error);
-  }
-}
-
-/**
- * Get search history
- */
-export function getSearchHistory(): Array<{ params: Record<string, any>; timestamp: string }> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Failed to get search history:', error);
-    return [];
-  }
-}
-
-/**
- * Clear search history
- */
-export function clearSearchHistory(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEYS.SEARCH_HISTORY);
-  } catch (error) {
-    console.error('Failed to clear search history:', error);
   }
 }
 
@@ -135,7 +76,7 @@ export function hasSavedAnswers(): boolean {
 }
 
 /**
- * Save app state (stage, events, lastSearchParams) to localStorage
+ * Save app state (stage, events, lastSearchParams, answers) to localStorage
  */
 export function saveAppState(appState: AppState): void {
   try {
