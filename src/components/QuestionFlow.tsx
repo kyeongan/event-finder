@@ -62,7 +62,19 @@ export const QuestionFlow: React.FC<QuestionFlowProps> = ({ onComplete, initialA
     const fetchCities = async () => {
       setIsLoadingSuggestions(true);
       try {
-        const response = await fetch(`http://localhost:3001/api/cities/search?query=${encodeURIComponent(value)}&limit=10`);
+        // Using POST to send query in request body instead of URL parameters
+        // Pros: More secure, no URL length limits, better for complex queries
+        // Cons: Cannot cache as effectively, not bookmarkable
+        const response = await fetch(`http://localhost:3001/api/cities/search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: value,
+            limit: 10,
+          }),
+        });
         const data = await response.json();
         setCitySuggestions(data.cities || []);
         setShowSuggestions(data.cities?.length > 0);

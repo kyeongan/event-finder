@@ -51,10 +51,31 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Search events endpoint - reverse proxy to Ticketmaster API
-app.get('/api/events/search', async (req: Request, res: Response) => {
+/**
+ * Search events endpoint - reverse proxy to Ticketmaster API
+ * 
+ * POST vs GET pros/cons:
+ * 
+ * Pros of POST:
+ * - Request body allows for larger/complex data structures without URL length limits (2048 chars in most browsers)
+ * - More secure - request body not visible in browser history, server logs, or URL bar
+ * - Better for sensitive data (though this endpoint doesn't have sensitive data currently)
+ * - Prevents caching issues when parameters change frequently
+ * - Cleaner for endpoints with many optional parameters
+ * 
+ * Cons of POST:
+ * - Not cacheable by default (GET requests can be cached by browsers/CDNs)
+ * - Not bookmarkable or shareable via URL
+ * - Cannot be prefetched or preloaded by browsers
+ * - Slightly more complex to test (can't just paste URL in browser)
+ * - POST is semantically meant for operations that modify state, not queries
+ * 
+ * Trade-off: For a search endpoint, GET is typically more appropriate, but POST works
+ * if you need the benefits above (security, URL length, complex data).
+ */
+app.post('/api/events/search', async (req: Request, res: Response) => {
   try {
-    const { keyword, city, stateCode, classificationName, startDateTime, endDateTime, size = 20, page = 0 }: EventSearchParams = req.query;
+    const { keyword, city, stateCode, classificationName, startDateTime, endDateTime, size = 20, page = 0 }: EventSearchParams = req.body;
 
     // Build query parameters
     const params: any = {
@@ -137,10 +158,26 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
   }
 });
 
-// City autocomplete endpoint
-app.get('/api/cities/search', async (req: Request, res: Response) => {
+/**
+ * City autocomplete endpoint
+ * 
+ * POST vs GET pros/cons:
+ * 
+ * Pros of POST:
+ * - Consistent API design if all endpoints use POST
+ * - Request body allows for future expansion with complex filters
+ * 
+ * Cons of POST:
+ * - Autocomplete typically benefits from GET caching for repeated queries
+ * - Less efficient for simple string queries
+ * - More overhead for frequent, rapid requests (typing events)
+ * 
+ * Note: For autocomplete, GET is generally preferred due to caching benefits,
+ * but using POST for consistency across the API.
+ */
+app.post('/api/cities/search', async (req: Request, res: Response) => {
   try {
-    const { query, limit = 10 } = req.query;
+    const { query, limit = 10 } = req.body;
 
     if (!query || typeof query !== 'string' || query.length < 2) {
       return res.json({ cities: [] });
@@ -211,8 +248,24 @@ app.get('/api/cities/search', async (req: Request, res: Response) => {
   }
 });
 
-// Get event classifications/categories
-app.get('/api/events/classifications', async (req: Request, res: Response) => {
+/**
+ * Get event classifications/categories
+ * 
+ * POST vs GET pros/cons:
+ * 
+ * Pros of POST:
+ * - Consistent API design across all endpoints
+ * 
+ * Cons of POST:
+ * - This is a pure read operation that should ideally be cached
+ * - GET is more semantically correct for retrieving static data
+ * - POST prevents browser/CDN caching, requiring more API calls
+ * - Classifications rarely change, so cache hits would significantly reduce load
+ * 
+ * Note: For static reference data like classifications, GET is strongly preferred.
+ * Using POST here only for consistency with the requirement.
+ */
+app.post('/api/events/classifications', async (req: Request, res: Response) => {
   try {
     const response = await axios.get(`${TICKETMASTER_BASE_URL}/classifications.json`, {
       params: {

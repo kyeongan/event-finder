@@ -61,6 +61,24 @@ const getDateRange = (rangeType: string): { start: string; end: string } | null 
  *
  * This layer abstracts all API calls and provides a clean interface
  * for the React components to interact with the backend.
+ * 
+ * POST vs GET for search endpoints:
+ * 
+ * Pros of POST:
+ * - Request body supports complex search parameters without URL length limits
+ * - More secure - parameters not visible in browser history or server logs
+ * - Better for future expansion with nested/complex filter objects
+ * - Avoids URL encoding issues with special characters
+ * 
+ * Cons of POST:
+ * - Search results cannot be bookmarked or shared via URL
+ * - No browser caching (users must re-fetch on back button)
+ * - Cannot use browser prefetching for faster perceived performance
+ * - Less RESTful (GET is the semantic HTTP method for queries)
+ * 
+ * Trade-off: POST provides better security and flexibility at the cost of
+ * caching and shareability. For production, consider GET with proper caching
+ * headers, or implement both methods for different use cases.
  */
 
 export const eventApi = {
@@ -96,7 +114,8 @@ export const eventApi = {
 
       console.log('Searching events with params:', params);
 
-      const response = await axios.get<EventSearchResponse>(`${API_BASE_URL}/events/search`, { params });
+      // Using POST instead of GET to send search parameters in request body
+      const response = await axios.post<EventSearchResponse>(`${API_BASE_URL}/events/search`, params);
 
       return response.data;
     } catch (error: any) {
