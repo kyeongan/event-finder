@@ -1,4 +1,4 @@
-# VDX Event Finder
+# Event Finder near you
 
 Full-stack event discovery app using React, TypeScript, Express, and the Ticketmaster API.
 
