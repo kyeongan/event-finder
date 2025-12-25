@@ -21,14 +21,33 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import NodeCache from 'node-cache';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// In memory cache
-const cache = new Map<string, string>();
+// ==================== CACHE CONFIGURATION ====================
+
+/**
+ * Production-grade in-memory cache using node-cache
+ *
+ * Features:
+ * - TTL (Time-To-Live): 3600s (1 hour)
+ * - stdTTL: Standard TTL for all keys
+ * - checkperiod: Auto cleanup check every 600s (10 minutes)
+ * - useClones: Deep clone values to prevent mutations
+ * - maxKeys: Limit to 100 entries (prevents unbounded memory)
+ *
+ * Docs: https://www.npmjs.com/package/node-cache
+ */
+const eventCache = new NodeCache({
+  stdTTL: 3600, // Standard Time-To-Live: 1 hour
+  checkperiod: 600, // Auto cleanup every 10 minutes
+  useClones: true, // Clone values to prevent external mutations
+  maxKeys: 100, // Maximum 100 cached entries (LRU eviction built-in)
+});
 
 // Middleware
 app.use(cors()); // SHORTCUT: Allow all origins. Production: configure specific origins
@@ -51,7 +70,17 @@ interface EventSearchParams {
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const stats = eventCache.getStats();
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    cache: {
+      keys: stats.keys,
+      maxKeys: 100,
+      utilizationPercent: (stats.keys / 100) * 100,
+      ttlSeconds: 3600,
+    },
+  });
 });
 
 // Search events endpoint - reverse proxy to Ticketmaster API
@@ -73,13 +102,19 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
     if (startDateTime) params.startDateTime = startDateTime;
     if (endDateTime) params.endDateTime = endDateTime;
 
-    console.log('Searching events with params:', { ...params, apikey: '[REDACTED]' });
+    // Generate cache key without sensitive data
+    const cacheKeyParams = { ...params };
+    delete cacheKeyParams.apikey;
+    const cacheKey = JSON.stringify(cacheKeyParams);
 
-    // check the chache
-    const key = JSON.stringify(params);
-    if (cache.has(key)) {
-      return res.json(JSON.parse(cache.get(key)!));
+    // Check cache first
+    const cachedResult = eventCache.get<string>(cacheKey);
+    if (cachedResult) {
+      console.log('✅ Cache HIT:', { keyword, city, page });
+      return res.json(JSON.parse(cachedResult));
     }
+
+    console.log('🔄 Cache MISS - fetching from Ticketmaster API:', { keyword, city, page });
 
     const response = await axios.get(`${TICKETMASTER_BASE_URL}/events.json`, {
       params,
@@ -121,8 +156,9 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
       totalEvents: response.data.page?.totalElements || 0,
     };
 
-    // Cache before responding
-    cache.set(key, JSON.stringify(result));
+    // Cache the result (auto-expires in 1 hour, auto LRU eviction at 100 keys)
+    eventCache.set(cacheKey, JSON.stringify(result));
+    console.log('💾 Cached result (auto-expires in 1 hour)');
 
     res.json(result);
   } catch (error: any) {
