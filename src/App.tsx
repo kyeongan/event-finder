@@ -103,9 +103,9 @@ function App() {
             </div>
           )}
 
-          {stage === 'search' && <SearchForm onSearch={handleSearch} />}
+          <SearchForm onSearch={handleSearch} />
 
-          {/* {stage === 'search' && <QuestionFlow onComplete={handleSearch} />} */}
+          {stage === 'search' && <QuestionFlow onComplete={handleSearch} />}
 
           {stage === 'loading' && <Loading message="Searching for events..." />}
 

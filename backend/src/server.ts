@@ -4,7 +4,7 @@
  * PROTOTYPE SHORTCUTS TAKEN:
  * 1. No authentication - endpoints are open to anyone
  * 2. No rate limiting - could be abused in production
- * 3. No caching - every request hits Ticketmaster API
+ * 3. In-memory caching - production would use Redis/Memcached
  * 4. In-memory city list - would use database or geocoding API
  * 5. Basic error handling - would add structured logging
  *
@@ -42,11 +42,15 @@ const PORT = process.env.PORT || 3001;
  *
  * Docs: https://www.npmjs.com/package/node-cache
  */
+const CACHE_MAX_KEYS = 100;
+const CACHE_TTL_SECONDS = 3600;
+const CACHE_CHECK_PERIOD_SECONDS = 600;
+
 const eventCache = new NodeCache({
-  stdTTL: 3600, // Standard Time-To-Live: 1 hour
-  checkperiod: 600, // Auto cleanup every 10 minutes
+  stdTTL: CACHE_TTL_SECONDS, // Standard Time-To-Live: 1 hour
+  checkperiod: CACHE_CHECK_PERIOD_SECONDS, // Auto cleanup every 10 minutes
   useClones: true, // Clone values to prevent external mutations
-  maxKeys: 100, // Maximum 100 cached entries (LRU eviction built-in)
+  maxKeys: CACHE_MAX_KEYS, // Maximum 100 cached entries (LRU eviction built-in)
 });
 
 // Middleware
@@ -76,9 +80,9 @@ app.get('/api/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     cache: {
       keys: stats.keys,
-      maxKeys: 100,
-      utilizationPercent: (stats.keys / 100) * 100,
-      ttlSeconds: 3600,
+      maxKeys: CACHE_MAX_KEYS,
+      utilizationPercent: (stats.keys / CACHE_MAX_KEYS) * 100,
+      ttlSeconds: CACHE_TTL_SECONDS,
     },
   });
 });
@@ -102,9 +106,8 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
     if (startDateTime) params.startDateTime = startDateTime;
     if (endDateTime) params.endDateTime = endDateTime;
 
-    // Generate cache key without sensitive data
-    const cacheKeyParams = { ...params };
-    delete cacheKeyParams.apikey;
+    // Generate cache key without sensitive data (exclude apikey)
+    const { apikey, ...cacheKeyParams } = params;
     const cacheKey = JSON.stringify(cacheKeyParams);
 
     // Check cache first
