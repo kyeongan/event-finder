@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QuestionFlow } from './components/QuestionFlow';
 import { EventResults } from './components/EventResults';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Loading } from './components/Loading';
 import { eventApi } from './services/api';
 import { Event } from './types';
+import { saveAppState, loadAppState, clearAppState, AppState } from './utils/storage';
 import './App.css';
 
 export interface SearchParams {
@@ -23,10 +24,39 @@ export interface SearchParams {
  * 3. Results display (showing filtered events)
  */
 function App() {
-  const [stage, setStage] = useState<'search' | 'loading' | 'results' | 'no-results'>('search');
-  const [events, setEvents] = useState<Event[]>([]);
+  // Initialize state from localStorage if available
+  const savedState = loadAppState();
+  
+  // Validate saved stage value
+  const isValidStage = (stage: any): stage is 'search' | 'loading' | 'results' | 'no-results' => {
+    return ['search', 'loading', 'results', 'no-results'].includes(stage);
+  };
+  
+  const [stage, setStage] = useState<'search' | 'loading' | 'results' | 'no-results'>(
+    savedState?.stage && isValidStage(savedState.stage) ? savedState.stage : 'search'
+  );
+  const [events, setEvents] = useState<Event[]>(savedState?.events || []);
   const [error, setError] = useState<string | null>(null);
-  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null);
+  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(
+    savedState?.lastSearchParams || null
+  );
+
+  // Save app state to localStorage whenever it changes
+  useEffect(() => {
+    if (stage === 'results' || stage === 'no-results') {
+      const currentState = loadAppState();
+      const appState: AppState = {
+        stage,
+        events,
+        lastSearchParams,
+        answers: currentState?.answers, // Preserve answers
+      };
+      saveAppState(appState);
+    } else if (stage === 'search') {
+      // Clear saved state when starting a new search
+      clearAppState();
+    }
+  }, [stage, events, lastSearchParams]);
 
   const handleSearch = async (params: SearchParams | Record<string, unknown>) => {
     setStage('loading');

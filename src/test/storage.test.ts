@@ -9,7 +9,16 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { saveAnswers, loadAnswers, clearAnswers, hasSavedAnswers, saveLastSearch, loadLastSearch, addToSearchHistory, getSearchHistory, clearSearchHistory } from '../utils/storage';
+import { 
+  saveAnswers, 
+  loadAnswers, 
+  clearAnswers, 
+  hasSavedAnswers, 
+  saveAppState,
+  loadAppState,
+  clearAppState,
+  AppState
+} from '../utils/storage';
 
 describe('Storage Utilities', () => {
   beforeEach(() => {
@@ -17,7 +26,7 @@ describe('Storage Utilities', () => {
     localStorage.clear();
   });
 
-  describe('saveAnswers and loadAnswers', () => {
+  describe('saveAnswers and loadAnswers (consolidated)', () => {
     it('should save and retrieve answers correctly', () => {
       // WHY: Core functionality - users must be able to save progress
       const testAnswers = { location: 'New York, NY', eventType: 'Music' };
@@ -36,7 +45,7 @@ describe('Storage Utilities', () => {
 
     it('should handle invalid JSON gracefully', () => {
       // WHY: Corrupted localStorage should not crash the app
-      localStorage.setItem('eventFinder_answers', 'invalid-json{');
+      localStorage.setItem('eventFinder_appState', 'invalid-json{');
       const loaded = loadAnswers();
       expect(loaded).toBeNull();
     });
@@ -49,16 +58,43 @@ describe('Storage Utilities', () => {
       const loaded = loadAnswers();
       expect(loaded).toEqual({ location: 'New York, NY' });
     });
+
+    it('should preserve app state when saving answers', () => {
+      // WHY: Saving answers should not lose other app state
+      const initialState: AppState = {
+        stage: 'results',
+        events: [],
+        lastSearchParams: { location: 'Test' },
+      };
+      saveAppState(initialState);
+
+      saveAnswers({ location: 'New York, NY' });
+
+      const state = loadAppState();
+      expect(state?.answers).toEqual({ location: 'New York, NY' });
+      expect(state?.stage).toBe('results');
+      expect(state?.lastSearchParams).toEqual({ location: 'Test' });
+    });
   });
 
   describe('clearAnswers', () => {
-    it('should remove saved answers', () => {
-      // WHY: Users need to start fresh after completing a search
-      saveAnswers({ location: 'Test' });
+    it('should remove saved answers but keep app state', () => {
+      // WHY: Clear answers independently without losing results
+      const state: AppState = {
+        stage: 'results',
+        events: [],
+        lastSearchParams: { location: 'Test' },
+        answers: { location: 'New York' },
+      };
+      saveAppState(state);
+
       clearAnswers();
 
       const loaded = loadAnswers();
+      const appState = loadAppState();
       expect(loaded).toBeNull();
+      expect(appState?.stage).toBe('results');
+      expect(appState?.lastSearchParams).toEqual({ location: 'Test' });
     });
   });
 
@@ -80,56 +116,117 @@ describe('Storage Utilities', () => {
     });
   });
 
-  describe('saveLastSearch and loadLastSearch', () => {
-    it('should save search with timestamp', () => {
-      // WHY: Track when searches were made for analytics/history
-      const searchParams = { location: 'Chicago, IL', eventType: 'Sports' };
+  describe('App State Persistence (consolidated storage)', () => {
+    it('should save and retrieve app state correctly', () => {
+      // WHY: Users should not lose their results when refreshing the page
+      const testState: AppState = {
+        stage: 'results',
+        events: [
+          { 
+            id: '1', 
+            name: 'Concert', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 1,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          },
+          { 
+            id: '2', 
+            name: 'Game', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 2,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          }
+        ],
+        lastSearchParams: { location: 'New York, NY', eventType: 'Music' }
+      };
 
-      saveLastSearch(searchParams);
-      const loaded = loadLastSearch();
+      saveAppState(testState);
+      const loaded = loadAppState();
 
-      expect(loaded?.params).toEqual(searchParams);
-      expect(loaded?.timestamp).toBeDefined();
-      expect(typeof loaded?.timestamp).toBe('string');
+      expect(loaded).toEqual(testState);
     });
 
-    it('should return null when no last search exists', () => {
-      expect(loadLastSearch()).toBeNull();
-    });
-  });
-
-  describe('Search History', () => {
-    it('should add searches to history', () => {
-      // WHY: Users should see their recent searches
-      addToSearchHistory({ location: 'Boston' });
-      addToSearchHistory({ location: 'New York' });
-
-      const history = getSearchHistory();
-      expect(history).toHaveLength(2);
-      expect(history[0].params).toEqual({ location: 'New York' }); // Most recent first
+    it('should return null when no app state is saved', () => {
+      // WHY: Initial load should handle missing state gracefully
+      const loaded = loadAppState();
+      expect(loaded).toBeNull();
     });
 
-    it('should limit history to 10 items', () => {
-      // WHY: Prevent localStorage from growing unbounded
-      for (let i = 0; i < 15; i++) {
-        addToSearchHistory({ location: `City ${i}` });
-      }
-
-      const history = getSearchHistory();
-      expect(history).toHaveLength(10);
+    it('should handle invalid JSON gracefully', () => {
+      // WHY: Corrupted localStorage should not crash the app
+      localStorage.setItem('eventFinder_appState', 'invalid-json{');
+      const loaded = loadAppState();
+      expect(loaded).toBeNull();
     });
 
-    it('should clear search history', () => {
-      // WHY: Users may want to clear their search history
-      addToSearchHistory({ location: 'Test' });
-      clearSearchHistory();
+    it('should clear saved app state', () => {
+      // WHY: Users should start fresh when initiating a new search
+      const testState: AppState = {
+        stage: 'results',
+        events: [
+          { 
+            id: '1', 
+            name: 'Test', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 1,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          }
+        ],
+        lastSearchParams: { location: 'Test' }
+      };
+      saveAppState(testState);
+      clearAppState();
 
-      const history = getSearchHistory();
-      expect(history).toEqual([]);
+      const loaded = loadAppState();
+      expect(loaded).toBeNull();
     });
 
-    it('should return empty array when no history exists', () => {
-      expect(getSearchHistory()).toEqual([]);
+    it('should preserve app state across page refresh', () => {
+      // WHY: This is the core requirement - state must survive refresh
+      const state: AppState = {
+        stage: 'results',
+        events: [
+          { 
+            id: '123', 
+            name: 'Summer Festival', 
+            url: 'http://example.com',
+            relevanceFactors: {
+              position: 1,
+              hasKeywordMatch: null,
+              matchesClassification: null,
+              matchesCity: null,
+            }
+          }
+        ],
+        lastSearchParams: { 
+          location: 'Los Angeles, CA',
+          dateRange: 'next-week',
+          eventType: 'Festival'
+        }
+      };
+
+      saveAppState(state);
+      
+      // Simulate page refresh by loading state
+      const rehydrated = loadAppState();
+      
+      expect(rehydrated).not.toBeNull();
+      expect(rehydrated?.stage).toBe('results');
+      expect(rehydrated?.events).toHaveLength(1);
+      expect(rehydrated?.events[0].name).toBe('Summer Festival');
+      expect(rehydrated?.lastSearchParams?.location).toBe('Los Angeles, CA');
     });
   });
 });
