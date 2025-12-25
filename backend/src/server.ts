@@ -27,6 +27,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// In memory cache
+const cache = new Map<string, string>();
+
 // Middleware
 app.use(cors()); // SHORTCUT: Allow all origins. Production: configure specific origins
 app.use(express.json());
@@ -72,6 +75,12 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
 
     console.log('Searching events with params:', { ...params, apikey: '[REDACTED]' });
 
+    // check the chache
+    const key = JSON.stringify(params);
+    if (cache.has(key)) {
+      return res.json(JSON.parse(cache.get(key)!));
+    }
+
     const response = await axios.get(`${TICKETMASTER_BASE_URL}/events.json`, {
       params,
       timeout: 10000,
@@ -106,11 +115,16 @@ app.get('/api/events/search', async (req: Request, res: Response) => {
       },
     }));
 
-    res.json({
+    const result = {
       events: transformedEvents,
       page: response.data.page,
       totalEvents: response.data.page?.totalElements || 0,
-    });
+    };
+
+    // Cache before responding
+    cache.set(key, JSON.stringify(result));
+
+    res.json(result);
   } catch (error: any) {
     console.error('Error searching events:', error.message);
 

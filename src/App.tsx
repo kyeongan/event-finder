@@ -7,6 +7,7 @@ import { eventApi } from './services/api';
 import { Event } from './types';
 import { saveAppState, loadAppState, clearAppState, AppState } from './utils/storage';
 import './App.css';
+import { SearchForm } from './components/SearchForm';
 
 export interface SearchParams {
   location: string;
@@ -26,20 +27,16 @@ export interface SearchParams {
 function App() {
   // Initialize state from localStorage if available
   const savedState = loadAppState();
-  
+
   // Validate saved stage value
   const isValidStage = (stage: any): stage is 'search' | 'loading' | 'results' | 'no-results' => {
     return ['search', 'loading', 'results', 'no-results'].includes(stage);
   };
-  
-  const [stage, setStage] = useState<'search' | 'loading' | 'results' | 'no-results'>(
-    savedState?.stage && isValidStage(savedState.stage) ? savedState.stage : 'search'
-  );
+
+  const [stage, setStage] = useState<'search' | 'loading' | 'results' | 'no-results'>(savedState?.stage && isValidStage(savedState.stage) ? savedState.stage : 'search');
   const [events, setEvents] = useState<Event[]>(savedState?.events || []);
   const [error, setError] = useState<string | null>(null);
-  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(
-    savedState?.lastSearchParams || null
-  );
+  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(savedState?.lastSearchParams || null);
 
   // Save app state to localStorage whenever it changes
   useEffect(() => {
@@ -105,6 +102,8 @@ function App() {
               </button>
             </div>
           )}
+
+          <SearchForm onSearch={handleSearch} />
 
           {stage === 'search' && <QuestionFlow onComplete={handleSearch} />}
 
