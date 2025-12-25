@@ -42,7 +42,7 @@ export const questions: Question[] = [
     type: 'autocomplete',
     question: 'Where are you looking for events?',
     placeholder: 'e.g., New York, NY',
-    required: true,
+    required: false,
     helpText: 'Start typing to see suggestions',
     validation: (value: string) => {
       if (!value || value.trim().length === 0) {
