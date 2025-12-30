@@ -55,15 +55,15 @@ Currently has in-memory cache with TTL. Considering Redis implementation and ana
 **Description**:
 Improve error handling with graceful messages for different scenarios:
 
-| Status | Cause | Action |
-|--------|-------|--------|
-| 400 | Bad request (invalid params) | Client fixes request |
-| 401 | Unauthorized (API key) | Server fixes config |
-| 403 | Forbidden | Client not allowed |
-| 404 | Not found | Client checks URL |
-| 429 | Rate limited | Client waits & retries |
-| 500 | Server error | Server logs & fixes |
-| 503 | Service unavailable | Client retries later |
+| Status | Cause                        | Action                |
+|--------|------------------------------|-----------------------|
+| 400    | Bad request (invalid params) | Client fixes request  |
+| 401    | Unauthorized (API key)       | Server fixes config   |
+| 403    | Forbidden                    | Client not allowed    |
+| 404    | Not found                    | Client checks URL     |
+| 429    | Rate limited                 | Client waits & retries|
+| 500    | Server error                 | Server logs & fixes   |
+| 503    | Service unavailable          | Client retries later  |
 
 ---
 
@@ -158,10 +158,12 @@ Implement in-memory cache with simple map to check whether key is stored.
 
 ### Priority Areas
 
-1. **Scalability** (#15, #14) - Planning for high-traffic scenarios
-2. **Error Handling** (#13) - Better user experience during failures  
-3. **API Improvements** (#5, #12) - Security and multi-source support
-4. **Backend Features** (#1) - Pagination implementation
+Issues are prioritized based on impact to production readiness and user experience:
+
+1. **Scalability** (#15, #14) - Planning for high-traffic scenarios and performance optimization
+2. **Error Handling** (#13) - Better user experience during failures with clear messaging
+3. **API Improvements** (#5, #12) - Security hardening and multi-source data integration
+4. **Backend Features** (#1) - Pagination for improved data handling and UX
 
 ### Recent Activity
 
