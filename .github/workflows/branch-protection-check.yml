@@ -20,8 +20,7 @@ jobs:
             const branch = 'main';
 
             try {
-              const { data: protection } =
-                await github.rest.repos.getBranchProtection({
+              const protection = await github.rest.repos.getBranchProtection({
                 owner,
                 repo,
                 branch,
@@ -29,20 +28,20 @@ jobs:
 
               console.log('✅ Branch protection is enabled for main branch');
               console.log('Protection details:',
-                JSON.stringify(protection, null, 2));
+                JSON.stringify(protection.data, null, 2));
 
               // Check for required status checks
-              if (protection.required_status_checks) {
+              if (protection.data.required_status_checks) {
                 console.log('✅ Required status checks are enabled');
               } else {
                 core.warning('⚠️ Required status checks are not enabled');
               }
 
               // Check for required pull request reviews
-              if (protection.required_pull_request_reviews) {
+              if (protection.data.required_pull_request_reviews) {
                 console.log('✅ Required pull request reviews are enabled');
                 const count =
-                  protection.required_pull_request_reviews
+                  protection.data.required_pull_request_reviews
                     .required_approving_review_count;
                 if (count >= 1) {
                   console.log(`✅ Requires ${count} approving review(s)`);
@@ -53,17 +52,17 @@ jobs:
               }
 
               // Check if direct pushes are restricted
-              if (protection.restrictions) {
+              if (protection.data.restrictions) {
                 console.log('✅ Push restrictions are enabled');
               }
 
               // Check for linear history requirement
-              if (protection.required_linear_history?.enabled) {
+              if (protection.data.required_linear_history?.enabled) {
                 console.log('✅ Linear history is required');
               }
 
               // Check if administrators are included in restrictions
-              if (protection.enforce_admins?.enabled) {
+              if (protection.data.enforce_admins?.enabled) {
                 console.log('✅ Rules apply to administrators');
               } else {
                 console.log(

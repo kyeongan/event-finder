@@ -15,16 +15,13 @@ repository:
   has_wiki: false
   has_downloads: true
   
-  # Squash merge by default
+  # Merge settings
   allow_squash_merge: true
-  allow_merge_commit: true
+  allow_merge_commit: false  # Require linear history
   allow_rebase_merge: true
-  
+
   # Auto-delete head branches after merge
   delete_branch_on_merge: true
-  
-  # Require linear history
-  allow_merge_commit: false
 
 # Branch protection rules
 branches:
