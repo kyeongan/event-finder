@@ -38,17 +38,19 @@ To maintain code quality and prevent accidental pushes to main, the following br
 
 ### Optional but Recommended Rules
 
-#### 5. Require Linear History
+#### 5. Require Linear History ✅
 
 - Enforces a linear commit history
 - Prevents complex merge graphs
 - Makes git history easier to understand
+- **Enabled in this repository**
 
 #### 6. Include Administrators
 
 - Applies all branch protection rules to administrators
 - Ensures everyone follows the same process
-- Recommended for team consistency
+- Can be enabled for strict consistency
+- **Note**: Keeping this disabled allows administrators emergency access if needed
 
 ## Setting Up Branch Protection
 
@@ -60,20 +62,20 @@ To maintain code quality and prevent accidental pushes to main, the following br
 
    ```
    Branch name pattern: main
-   
+
    ☑ Require a pull request before merging
      ☑ Require approvals: 1
      ☐ Dismiss stale pull request approvals when new commits are pushed (optional)
      ☐ Require review from Code Owners (optional)
-   
+
    ☑ Require status checks to pass before merging
      ☑ Require branches to be up to date before merging
      Required status checks:
        - test-and-lint
-   
-   ☑ Require conversation resolution before merging (optional)
-   ☑ Require linear history (optional)
-   ☐ Include administrators (recommended)
+
+   ☑ Require conversation resolution before merging
+   ☑ Require linear history (recommended)
+   ☐ Include administrators (optional, allows emergency access if disabled)
    ```
 
 4. Click **Create** or **Save changes**

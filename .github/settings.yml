@@ -38,18 +38,19 @@ branches:
         strict: true
         contexts:
           - test-and-lint
-      
+
       # Enforce all configured restrictions for administrators
+      # Set to false to allow administrators emergency access if needed
       enforce_admins: false
-      
-      # Require branches to be up to date before merging
-      required_linear_history: false
-      
-      # Allow force pushes
+
+      # Require linear history for cleaner git history
+      required_linear_history: true
+
+      # Prevent force pushes
       allow_force_pushes: false
-      
-      # Allow deletions
+
+      # Prevent branch deletion
       allow_deletions: false
-      
+
       # Require conversation resolution before merging
       required_conversation_resolution: true
