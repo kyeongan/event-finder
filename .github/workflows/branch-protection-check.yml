@@ -1,0 +1,80 @@
+name: Branch Protection Check
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  check-branch-protection:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check branch protection rules
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const branch = 'main';
+            
+            try {
+              const { data: protection } = await github.rest.repos.getBranchProtection({
+                owner,
+                repo,
+                branch,
+              });
+              
+              console.log('✅ Branch protection is enabled for main branch');
+              console.log('Protection details:', JSON.stringify(protection, null, 2));
+              
+              // Check for required status checks
+              if (protection.required_status_checks) {
+                console.log('✅ Required status checks are enabled');
+              } else {
+                core.warning('⚠️ Required status checks are not enabled');
+              }
+              
+              // Check for required pull request reviews
+              if (protection.required_pull_request_reviews) {
+                console.log('✅ Required pull request reviews are enabled');
+                if (protection.required_pull_request_reviews.required_approving_review_count >= 1) {
+                  console.log(`✅ Requires ${protection.required_pull_request_reviews.required_approving_review_count} approving review(s)`);
+                }
+              } else {
+                core.warning('⚠️ Required pull request reviews are not enabled');
+              }
+              
+              // Check if direct pushes are restricted
+              if (protection.restrictions) {
+                console.log('✅ Push restrictions are enabled');
+              }
+              
+              // Check for linear history requirement
+              if (protection.required_linear_history?.enabled) {
+                console.log('✅ Linear history is required');
+              }
+              
+              // Check if administrators are included in restrictions
+              if (protection.enforce_admins?.enabled) {
+                console.log('✅ Rules apply to administrators');
+              } else {
+                console.log('ℹ️ Administrators can bypass branch protection rules');
+              }
+              
+            } catch (error) {
+              if (error.status === 404) {
+                core.setFailed('❌ Branch protection is NOT enabled for main branch');
+                console.log('\n📝 To enable branch protection:');
+                console.log('1. Go to: https://github.com/' + owner + '/' + repo + '/settings/branches');
+                console.log('2. Add rule for "main" branch');
+                console.log('3. Enable:');
+                console.log('   - Require a pull request before merging');
+                console.log('   - Require approvals (at least 1)');
+                console.log('   - Require status checks to pass before merging');
+                console.log('   - Require branches to be up to date before merging');
+              } else {
+                core.setFailed('Error checking branch protection: ' + error.message);
+              }
+            }

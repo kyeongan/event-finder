@@ -1,0 +1,58 @@
+# Repository settings for event-finder
+# This file can be used with the Probot Settings app to configure repository settings
+# See https://github.com/probot/settings
+
+repository:
+  name: event-finder
+  description: Full-stack event discovery app using React, TypeScript, Express, and the Ticketmaster API
+  homepage: https://event-finder.vercel.app
+  topics: react, typescript, express, ticketmaster, api, events
+  
+  # Privacy and security
+  private: false
+  has_issues: true
+  has_projects: true
+  has_wiki: false
+  has_downloads: true
+  
+  # Squash merge by default
+  allow_squash_merge: true
+  allow_merge_commit: true
+  allow_rebase_merge: true
+  
+  # Auto-delete head branches after merge
+  delete_branch_on_merge: true
+  
+  # Require linear history
+  allow_merge_commit: false
+
+# Branch protection rules
+branches:
+  - name: main
+    protection:
+      # Require pull request reviews before merging
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: false
+        require_code_owner_reviews: false
+        
+      # Require status checks to pass before merging
+      required_status_checks:
+        strict: true
+        contexts:
+          - test-and-lint
+      
+      # Enforce all configured restrictions for administrators
+      enforce_admins: false
+      
+      # Require branches to be up to date before merging
+      required_linear_history: false
+      
+      # Allow force pushes
+      allow_force_pushes: false
+      
+      # Allow deletions
+      allow_deletions: false
+      
+      # Require conversation resolution before merging
+      required_conversation_resolution: true
