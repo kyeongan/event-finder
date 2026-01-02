@@ -68,6 +68,10 @@ npm start             # Starts both frontend (5173) and backend (3001)
 
 See `ASSUMPTIONS.md` for detailed shortcuts and trade-offs.
 
+## 📋 Project Issues
+
+See `ISSUES.md` for a comprehensive list of open and closed GitHub issues, including planned improvements and completed features.
+
 **Technology Choices**:
 
 - React 19 + TypeScript for type safety
