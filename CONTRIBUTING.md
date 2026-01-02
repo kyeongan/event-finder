@@ -4,6 +4,10 @@ Thank you for your interest in contributing to Event Finder! 🎉
 
 We welcome contributions from developers of all skill levels. Whether you're fixing a typo, adding a feature, or improving documentation, your help is appreciated!
 
+## 🔒 Branch Protection
+
+The `main` branch is protected to ensure code quality and prevent accidental changes. All contributions must go through the pull request process with required approvals and passing CI checks. See [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md) for detailed information about our branch protection rules and requirements.
+
 ## 🚀 Getting Started
 
 ### Prerequisites

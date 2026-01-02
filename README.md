@@ -95,6 +95,15 @@ See `ISSUES.md` for a comprehensive list of open and closed GitHub issues, inclu
 
 See `TEST_SUMMARY.md` for details.
 
+## 🔒 Branch Protection & Contributing
+
+The `main` branch is protected with required reviews and CI checks. All contributions must:
+- Go through pull requests
+- Receive at least 1 approval
+- Pass all CI checks (lint, test, build)
+
+See [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md) for details and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
 ## 🚨 Known Limitations
 
 This is a **prototype**, not production-ready:
