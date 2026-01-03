@@ -40,6 +40,7 @@ const SUGGESTED_CITIES = [
   'Miami, FL',
   'Atlanta, GA',
 ];
+
 export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
   const [location, setLocation] = useState('');
   const [dateRange, setDateRange] = useState('');
@@ -48,6 +49,14 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // ZIP lookup state
+  const [isResolvingZip, setIsResolvingZip] = useState(false);
+  const [zipError, setZipError] = useState<string | null>(null);
+
+  // Current location state
+  const [isLocating, setIsLocating] = useState(false);
+  const [locError, setLocError] = useState<string | null>(null);
 
   // Filter cities based on input
   useEffect(() => {
@@ -59,6 +68,118 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
       setShowSuggestions(false);
     }
   }, [location]);
+
+  // Auto-resolve US ZIP code -> "City, ST"
+  useEffect(() => {
+    const zipMatch = location.trim().match(/^(\d{5})(?:-\d{4})?$/);
+    if (!zipMatch) {
+      setIsResolvingZip(false);
+      setZipError(null);
+      return;
+    }
+
+    const zip5 = zipMatch[1];
+    const controller = new AbortController();
+
+    setIsResolvingZip(true);
+    setZipError(null);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.zippopotam.us/us/${zip5}`, { signal: controller.signal });
+        if (!res.ok) throw new Error(`ZIP lookup failed: ${res.status}`);
+
+        const data: {
+          places?: Array<{
+            'place name'?: string;
+            'state abbreviation'?: string;
+          }>;
+        } = await res.json();
+
+        const first = data.places?.[0];
+        const city = first?.['place name'];
+        const state = first?.['state abbreviation'];
+
+        if (city && state) {
+          setLocation(`${city}, ${state}`);
+          setShowSuggestions(false);
+        } else {
+          setZipError('Could not resolve ZIP code.');
+        }
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return;
+        setZipError('Could not resolve ZIP code.');
+      } finally {
+        setIsResolvingZip(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [location]);
+
+  const handleUseCurrentLocation = () => {
+    setLocError(null);
+    setZipError(null);
+    setShowSuggestions(false);
+
+    if (!('geolocation' in navigator)) {
+      setLocError('Geolocation is not supported in this browser.');
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+
+          // Reverse geocode -> city/state (no API key)
+          const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&localityLanguage=en`);
+
+          if (!res.ok) throw new Error(`Reverse geocode failed: ${res.status}`);
+
+          const data: {
+            city?: string;
+            locality?: string;
+            principalSubdivision?: string;
+            principalSubdivisionCode?: string; // e.g. "US-CA"
+            countryCode?: string;
+          } = await res.json();
+
+          const city = data.city || data.locality;
+          const regionCode = data.principalSubdivisionCode?.includes('-') ? data.principalSubdivisionCode.split('-')[1] : undefined;
+          const region = regionCode || data.principalSubdivision;
+
+          if (city && region) {
+            setLocation(`${city}, ${region}`);
+            setShowSuggestions(false);
+            inputRef.current?.blur();
+          } else if (data.principalSubdivision && data.countryCode) {
+            setLocation(`${data.principalSubdivision}, ${data.countryCode}`);
+            setShowSuggestions(false);
+            inputRef.current?.blur();
+          } else {
+            setLocError('Could not determine a city from your location.');
+          }
+        } catch {
+          setLocError('Could not determine a city from your location.');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        // Common: user denied permission
+        setIsLocating(false);
+        if (err.code === err.PERMISSION_DENIED) setLocError('Location permission was denied.');
+        else setLocError('Unable to get your current location.');
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 }
+    );
+  };
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -74,7 +195,6 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     onSearch({ location, dateRange, eventType });
   };
 
@@ -83,27 +203,36 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
     setShowSuggestions(false);
   };
 
-  // Get today's date in YYYY-MM-DD format for min date
-
   return (
     <div className="search-form-container">
       <form onSubmit={handleSubmit} className="search-form">
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="location">Location</label>
+            <label htmlFor="location" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span>Location</span>
+              <button type="button" onClick={handleUseCurrentLocation} disabled={isLocating} className="search-button" style={{ padding: '6px 10px', fontSize: 12 }}>
+                {isLocating ? 'Locating…' : 'Use my location'}
+              </button>
+            </label>
+
             <div className="autocomplete-wrapper">
               <input
                 ref={inputRef}
                 id="location"
                 type="text"
-                // required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 onFocus={() => location.length >= 2 && filteredCities.length > 0 && setShowSuggestions(true)}
-                placeholder="e.g., New York, NY"
+                placeholder="ZIP, or use my location"
                 className="form-input"
                 autoComplete="off"
               />
+
+              {isResolvingZip && <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>Resolving ZIP code…</div>}
+              {zipError && <div style={{ marginTop: 6, fontSize: 12, color: '#b00020' }}>{zipError}</div>}
+
+              {locError && <div style={{ marginTop: 6, fontSize: 12, color: '#b00020' }}>{locError}</div>}
+
               {showSuggestions && (
                 <div ref={suggestionsRef} className="suggestions-dropdown">
                   {filteredCities.map((city) => (
